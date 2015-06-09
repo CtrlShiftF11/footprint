@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<%= include partials/navmenu %>
+<head>
+    <script>
+        //        $(document).ajaxError(ajaxErrorHandler);
+        $(document).ready(function () {
+
+            function getEpicsByProject() {
+                var epicParams = {};
+                epicParams.projectId = 11604; //TEST CODE
+                $.ajax({
+                    url: '/epics/project/' + epicParams.projectId,
+                    type: 'GET',
+                    contentType: 'application/json',
+                    dataType: 'json'
+                    //data: JSON.stringify(epicParams)
+                })
+                        .done(function (res) {
+                            console.log('result set...');
+                            console.log(res);
+                        });
+            }
+
+            getEpicsByProject();
+
+        });
+    </script>
+
+
+</head>
+<body>
+<h1><%= title %></h1>
+
+<h2>Epics</h2>
+</body>
+</html>

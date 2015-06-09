@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<%= include partials/navmenu %>
+<head>
+    <script>
+        //        $(document).ajaxError(ajaxErrorHandler);
+        $(document).ready(function () {
+
+            function getProjects() {
+                console.log('calling projects');
+                $.ajax({
+                    url: '/projects/',
+                    type: 'GET',
+                    contentType: 'application/json',
+                    dataType: 'json'
+                })
+                        .done(function (res) {
+                            console.log('result set...');
+                            console.log(res);
+                        });
+            }
+
+            getProjects();
+
+        });
+    </script>
+
+
+</head>
+<body>
+<h1><%= title %></h1>
+
+<h2>Projects</h2>
+</body>
+</html>

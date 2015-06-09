@@ -1,0 +1,21 @@
+body {
+    /*min-height: 800px;*/
+    padding-top: 70px;
+    padding-left: 60px;
+    padding-right: 60px;
+}
+
+a {
+    color: #00B7FF;
+}
+
+.reportPanel {
+    width: 300px;
+    float: left;
+    margin-right: 10px;
+    min-height: 280px;
+}
+
+form label {
+    min-width: 120px;
+}
