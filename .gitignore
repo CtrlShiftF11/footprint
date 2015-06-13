@@ -3,4 +3,4 @@ npm-debug.log
 node_modules
 public/downloads/exports
 footprint.iml
-config/jiraconfig.js
+config
