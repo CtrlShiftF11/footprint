@@ -37,13 +37,13 @@ projectModels.getJiraProjects = function getJiraProjects(callback) {
             var bodyObj = JSON.parse(body);
             for (var i = 0; i < bodyObj.length; i++) {
                 var qry = "INSERT INTO project (id, self, key, name, avatar_urls) ";
-                qry += "SELECT :id, :self, :key, :name, :avatar_urls "
+                qry += "SELECT :id, :self, :key, :name, :avatar_urls ";
                 qry += "WHERE ";
                 qry += "NOT EXISTS ( ";
                 qry += "SELECT  id ";
                 qry += "FROM    project ";
                 qry += "WHERE   id = :id";
-                qry += ");"
+                qry += ");";
                 sequelize.query(qry, { replacements: { id: bodyObj[i]["id"], self: bodyObj[i]["self"], key: bodyObj[i]["key"],
                     name: bodyObj[i]["name"], avatar_urls: JSON.stringify(bodyObj[i]["avatarUrls"])},
                     type: sequelize.QueryTypes.INSERT }).spread(function (results, metadata) {
