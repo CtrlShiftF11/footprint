@@ -10,7 +10,7 @@ var sequelize = new Sequelize(dbconfig.database, dbconfig.username, dbconfig.pas
 var issueModels = {};
 
 issueModels.getIssues = function getIssues(params, callback) {
-    var qry = "SELECT   id, self, key, summary, epic_key, team_id, issue_type_id, description, project_id, updated, created, status_id, story_points ";
+    var qry = "SELECT   id, self, key, summary, epic_key, team_id, issue_type_id, description, project_id, updated, created, status_id, story_points, resolution_date ";
     qry += "FROM        issue ";
     qry += "WHERE       project_id = :project_id ";
     qry += "ORDER BY    summary";
@@ -40,7 +40,7 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
     console.log('jira is...' + jira);
     var options = {
         host: jira.jiraHost,
-        path: jira.jiraRestPath + 'search?jql=' + encodeURIComponent(jql) + '&fields=' + encodeURIComponent(fields) + '&startAt=0&maxResults=100',
+        path: jira.jiraRestPath + 'search?jql=' + encodeURIComponent(jql) + '&fields=' + encodeURIComponent(fields) + '&startAt=0&maxResults=500',
         auth: jira.jiraUserName + ':' + jira.jiraPassword,
         port: 443
     };
@@ -56,8 +56,8 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
                 var bodyAsObj = JSON.parse(body);
                 var bodyObj = bodyAsObj["issues"];
                 for (var i = 0; i < bodyObj.length; i++) {
-                    var qry = "INSERT INTO issue (id, self, key, summary, epic_key, team_id, issue_type_id, description, project_id, updated, created, status_id, story_points) ";
-                    qry += "SELECT  :id, :self, :key, :summary, :epic_key, :team_id, :issue_type_id, :description, :project_id, :updated, :created, :status_id, :story_points ";
+                    var qry = "INSERT INTO issue (id, self, key, summary, epic_key, team_id, issue_type_id, description, project_id, updated, created, status_id, story_points, resolution_date) ";
+                    qry += "SELECT  :id, :self, :key, :summary, :epic_key, :team_id, :issue_type_id, :description, :project_id, :updated, :created, :status_id, :story_points, :resolution_date ";
                     qry += "WHERE ";
                     qry += "NOT EXISTS ( ";
                     qry += "SELECT  id ";
@@ -76,7 +76,7 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
                         description: bodyObj[i]["fields"]["description"], project_id: bodyObj[i]["fields"]["project"]["id"], updated: bodyObj[i]["fields"]["updated"],
                         created: bodyObj[i]["fields"]["created"], status_id: bodyObj[i]["fields"]["status"]["id"], issue_type_id: bodyObj[i]["fields"]["issuetype"]["id"],
                         epic_key: bodyObj[i]["fields"][jira.epicIssueKeyDisplayFieldId], team_id: teamId,
-                        story_points: bodyObj[i]["fields"][jira.storyPointsDisplayFieldId]},
+                        story_points: bodyObj[i]["fields"][jira.storyPointsDisplayFieldId], resolution_date: bodyObj[i]["fields"]["resolutiondate"]},
                         type: sequelize.QueryTypes.INSERT }).spread(function (results, metadata) {
 
                     });
