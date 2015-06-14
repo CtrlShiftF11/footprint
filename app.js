@@ -10,6 +10,7 @@ var routes = require('./routes/index');
 var projects = require('./routes/projects');
 var epics = require('./routes/epics');
 var issues = require('./routes/issues');
+var rapidBoards = require('./routes/rapidboards');
 
 var app = express();
 
@@ -37,6 +38,7 @@ app.use('/views/epics', epics);
 app.use('/projects', projects);
 app.use('/epics', epics);
 app.use('/issues', issues);
+app.use('/rapidboards', rapidBoards);
 
 //app.use('/views/projects', projects);
 

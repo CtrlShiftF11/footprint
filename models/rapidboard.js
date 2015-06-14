@@ -32,7 +32,8 @@ rapidBoardModels.getJiraRapidBoards = function getJiraRapidBoards(callback) {
             body += d;
         });
         jiraRes.on('end', function (e) {
-            var bodyObj = JSON.parse(body);
+            var bodyAsObj = JSON.parse(body);
+            var bodyObj = bodyAsObj["views"];
             for (var i = 0; i < bodyObj.length; i++) {
                 var qry = "INSERT INTO rapid_board (id, name, can_edit, sprint_support_enabled, show_days_in_column) ";
                 qry += "SELECT  :id, :name, :can_edit, :sprint_support_enabled, :show_days_in_column ";
