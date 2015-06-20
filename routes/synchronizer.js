@@ -11,38 +11,35 @@ var sprint = require('../models/sprint');
 router.post('/', function (req, res, next) {
     if (req.body.adminUserName == jira.jiraUserName && req.body.adminPassword == jira.jiraPassword) {
         function syncIssueTypes() {
-            console.log('sync function called');
             var deferred = Q.defer();
             issuetype.getJiraIssueTypes(function (success) {
                 if (success) {
-                    deferred.resolve();
+                    deferred.resolve('Synchronized Issue Types');
                 }
                 else {
                     deferred.reject(new Error('Error Synchronizing JIRA Issue Types'));
                 }
-                console.log('issue type deferred is...');
-                console.log(deferred);
-                return deferred.promise;
             });
+            return deferred.promise;
         }
 
         function syncProjects() {
+            var deferred = Q.defer();
             project.getJiraProjects(function (success) {
-                var deferred = Q.defer();
-                issuetype.getJiraIssueTypes(function (success) {
-                    if (success) {
-                        deferred.resolve();
-                    }
-                    else {
-                        deferred.reject(new Error('Error Synchronizing JIRA Projects'));
-                    }
-                    return deferred.promise;
-                });
+                if (success) {
+                    deferred.resolve('Synchronized Projects');
+                }
+                else {
+                    deferred.reject(new Error('Error Synchronizing JIRA Projects'));
+                }
             });
+            return deferred.promise;
         }
 
         Q.all([syncIssueTypes(), syncProjects()])
-            .done(function (syncPromises) {
+            .spread(function (issueTypePromise, projectPromise) {
+                console.log(issueTypePromise);
+                console.log(projectPromise);
                 res.sendStatus(200);
             });
     }
