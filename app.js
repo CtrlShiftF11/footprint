@@ -11,6 +11,7 @@ var projects = require('./routes/projects');
 var epics = require('./routes/epics');
 var issues = require('./routes/issues');
 var rapidBoards = require('./routes/rapidboards');
+var synchronizer = require('./routes/synchronizer');
 
 var app = express();
 
@@ -39,6 +40,7 @@ app.use('/projects', projects);
 app.use('/epics', epics);
 app.use('/issues', issues);
 app.use('/rapidboards', rapidBoards);
+app.use('/synchronizer', synchronizer);
 
 //app.use('/views/projects', projects);
 
