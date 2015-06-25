@@ -55,6 +55,7 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
         jiraRes.on('end', function (e) {
                 var bodyAsObj = JSON.parse(body);
                 var bodyObj = bodyAsObj["issues"];
+                //console.log(bodyObj);
                 for (var i = 0; i < bodyObj.length; i++) {
                     var qry = "INSERT INTO issue (id, self, key, summary, epic_key, team_id, issue_type_id, description, project_id, updated, created, status_id, story_points, resolution_date) ";
                     qry += "SELECT  :id, :self, :key, :summary, :epic_key, :team_id, :issue_type_id, :description, :project_id, :updated, :created, :status_id, :story_points, :resolution_date ";
@@ -67,7 +68,7 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
                         qry += "AND epic_key <> :epic_key ";
                     }
                     qry += ");";
-                    console.log(bodyObj[i]);
+                    //console.log(bodyObj[i]);
                     var teamId = null;
                     if (bodyObj[i]["fields"][jira.teamDisplayFieldId] != null) {
                         teamId = bodyObj[i]["fields"][jira.teamDisplayFieldId]["id"];

@@ -70,7 +70,7 @@ sprintModels.getJiraSprintReport = function getJiraSprintReport(params, callback
 
             });
             success = true;
-            callback(bodyObj);
+            callback(success);
         });
         jiraRes.on('error', function (err) {
             console.log('Unable to gather JIRA data.\n' + err.message);

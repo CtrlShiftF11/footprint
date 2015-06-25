@@ -36,30 +36,36 @@ epicModels.getJiraEpicsByProjectId = function getJiraEpicsByProjectId(params, ca
             body += d;
         });
         jiraRes.on('end', function (e) {
-            var bodyAsObj = JSON.parse(body);
-            var bodyObj = bodyAsObj["issues"];
-            console.log(body.length);
-            console.log('here is the body');
-            console.log(bodyObj);
-            for (var i = 0; i < bodyObj.length; i++) {
-                var qry = "INSERT INTO epic (id, self, key, summary, description, project_id, updated, created, status_id) ";
-                qry += "SELECT  :id, :self, :key, :summary, :description, :project_id, :updated, :created, :status_id ";
-                qry += "WHERE ";
-                qry += "NOT EXISTS ( ";
-                qry += "SELECT  id ";
-                qry += "FROM    epic ";
-                qry += "WHERE   id = :id";
-                qry += ");";
-                console.log('here is the qry');
-                console.log(qry);
-                sequelize.query(qry, { replacements: { id: bodyObj[i]["id"], self: bodyObj[i]["self"], key: bodyObj[i]["key"], summary: bodyObj[i]["fields"]["summary"],
-                    description: bodyObj[i]["fields"]["description"], project_id: bodyObj[i]["fields"]["project"]["id"], updated: bodyObj[i]["fields"]["updated"],
-                    created: bodyObj[i]["fields"]["created"], status_id: bodyObj[i]["fields"]["status"]["id"]},
-                    type: sequelize.QueryTypes.INSERT }).spread(function (results, metadata) {
+            if (body != null) {
+                var bodyAsObj = JSON.parse(body);
+                var bodyObj = bodyAsObj["issues"];
+                //console.log(body.length);
+                //console.log('here is the body');
+                console.log('epic bodyObj...');
+                console.log(bodyObj);
+                for (var i = 0; i < bodyObj.length; i++) {
+                    var qry = "INSERT INTO epic (id, self, key, summary, description, project_id, updated, created, status_id) ";
+                    qry += "SELECT  :id, :self, :key, :summary, :description, :project_id, :updated, :created, :status_id ";
+                    qry += "WHERE ";
+                    qry += "NOT EXISTS ( ";
+                    qry += "SELECT  id ";
+                    qry += "FROM    epic ";
+                    qry += "WHERE   id = :id";
+                    qry += ");";
+                    //console.log('here is the qry');
+                    //console.log(qry);
+                    sequelize.query(qry, { replacements: { id: bodyObj[i]["id"], self: bodyObj[i]["self"], key: bodyObj[i]["key"], summary: bodyObj[i]["fields"]["summary"],
+                        description: bodyObj[i]["fields"]["description"], project_id: bodyObj[i]["fields"]["project"]["id"], updated: bodyObj[i]["fields"]["updated"],
+                        created: bodyObj[i]["fields"]["created"], status_id: bodyObj[i]["fields"]["status"]["id"]},
+                        type: sequelize.QueryTypes.INSERT }).spread(function (results, metadata) {
 
-                });
+                    });
+                }
+                success = true;
             }
-            success = true;
+            else {
+                success = true; //The call worked but returned no data from JIRA
+            }
             callback(success);
         });
         jiraRes.on('error', function (err) {
