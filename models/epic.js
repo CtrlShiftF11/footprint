@@ -21,6 +21,7 @@ epicModels.getEpicsByProjectId = function getEpicsByProjectId(params, callback) 
 };
 
 epicModels.getJiraEpicsByProjectId = function getJiraEpicsByProjectId(params, callback) {
+    console.log('params.projectId is ' + params.projectId);
     var jql = 'project=' + params.projectId + ' AND issuetype=Epic ORDER BY summary ASC';
     var fields = 'project,issuetype,id,key,summary,description,status,issuetype,updated,created';
     var options = {
@@ -36,13 +37,9 @@ epicModels.getJiraEpicsByProjectId = function getJiraEpicsByProjectId(params, ca
             body += d;
         });
         jiraRes.on('end', function (e) {
-            if (body != null) {
-                var bodyAsObj = JSON.parse(body);
+            var bodyAsObj = JSON.parse(body);
+            if (typeof bodyAsObj["issues"] !== 'undefined') {
                 var bodyObj = bodyAsObj["issues"];
-                //console.log(body.length);
-                //console.log('here is the body');
-                console.log('epic bodyObj...');
-                console.log(bodyObj);
                 for (var i = 0; i < bodyObj.length; i++) {
                     var qry = "INSERT INTO epic (id, self, key, summary, description, project_id, updated, created, status_id) ";
                     qry += "SELECT  :id, :self, :key, :summary, :description, :project_id, :updated, :created, :status_id ";
@@ -52,8 +49,6 @@ epicModels.getJiraEpicsByProjectId = function getJiraEpicsByProjectId(params, ca
                     qry += "FROM    epic ";
                     qry += "WHERE   id = :id";
                     qry += ");";
-                    //console.log('here is the qry');
-                    //console.log(qry);
                     sequelize.query(qry, { replacements: { id: bodyObj[i]["id"], self: bodyObj[i]["self"], key: bodyObj[i]["key"], summary: bodyObj[i]["fields"]["summary"],
                         description: bodyObj[i]["fields"]["description"], project_id: bodyObj[i]["fields"]["project"]["id"], updated: bodyObj[i]["fields"]["updated"],
                         created: bodyObj[i]["fields"]["created"], status_id: bodyObj[i]["fields"]["status"]["id"]},

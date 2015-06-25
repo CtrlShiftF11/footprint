@@ -36,16 +36,12 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
     }
     var fields = 'project,issuetype,id,key,summary,description,status,issuetype,updated,created,avatarUrls,';
     fields += jira.epicIssueKeyDisplayFieldId + ',' + jira.teamDisplayFieldId + ',' + jira.storyPointsDisplayFieldId;
-    console.log('fields are...' + fields);
-    console.log('jira is...' + jira);
     var options = {
         host: jira.jiraHost,
         path: jira.jiraRestPath + 'search?jql=' + encodeURIComponent(jql) + '&fields=' + encodeURIComponent(fields) + '&startAt=0&maxResults=500',
         auth: jira.jiraUserName + ':' + jira.jiraPassword,
         port: 443
     };
-    console.log('options are...');
-    console.log(options);
     var success = false;
     var body = '';
     https.get(options, function (jiraRes) {
@@ -53,9 +49,11 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
             body += d;
         });
         jiraRes.on('end', function (e) {
-                var bodyAsObj = JSON.parse(body);
+            var bodyAsObj = JSON.parse(body);
+            console.log('issue body is...');
+            console.log(bodyAsObj);
+            if (typeof bodyAsObj["issues"] !== 'undefined') {
                 var bodyObj = bodyAsObj["issues"];
-                //console.log(bodyObj);
                 for (var i = 0; i < bodyObj.length; i++) {
                     var qry = "INSERT INTO issue (id, self, key, summary, epic_key, team_id, issue_type_id, description, project_id, updated, created, status_id, story_points, resolution_date) ";
                     qry += "SELECT  :id, :self, :key, :summary, :epic_key, :team_id, :issue_type_id, :description, :project_id, :updated, :created, :status_id, :story_points, :resolution_date ";
@@ -68,7 +66,6 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
                         qry += "AND epic_key <> :epic_key ";
                     }
                     qry += ");";
-                    //console.log(bodyObj[i]);
                     var teamId = null;
                     if (bodyObj[i]["fields"][jira.teamDisplayFieldId] != null) {
                         teamId = bodyObj[i]["fields"][jira.teamDisplayFieldId]["id"];
@@ -83,10 +80,12 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
                     });
                 }
                 success = true;
-                callback(success);
             }
-        )
-        ;
+            else {
+                success = true; //The call worked but returned no data from JIRA
+            }
+            callback(success);
+        });
         jiraRes.on('error', function (err) {
             console.log('Unable to gather JIRA data.\n' + err.message);
             success = false;
