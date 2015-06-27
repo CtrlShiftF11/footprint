@@ -10,9 +10,10 @@ var sequelize = new Sequelize(dbconfig.database, dbconfig.username, dbconfig.pas
 var sprintModels = {};
 
 sprintModels.getJiraSprintsByRapidBoardId = function getJiraSprintsByRapidBoardId(params, callback) {
+    console.log('now processing rapid board id ' + params.rapidBoardId);
     var options = {
         host: jira.jiraHost,
-        path: jira.jiraGreenhopperPath + '/sprintquery/' + params.rapidBoardId,
+        path: jira.jiraGreenhopperPath + 'sprintquery/' + params.rapidBoardId,
         auth: jira.jiraUserName + ':' + jira.jiraPassword,
         port: 443
     };
@@ -23,8 +24,16 @@ sprintModels.getJiraSprintsByRapidBoardId = function getJiraSprintsByRapidBoardI
             body += d;
         });
         jiraRes.on('end', function (e) {
-            var bodyAsObj = JSON.parse(body);
-            var bodyObj = bodyAsObj["sprints"];
+            console.log(body);
+            if (body !== '') {
+                var bodyAsObj = JSON.parse(body);
+                if (typeof bodyAsObj !== 'undefined') {
+                    var bodyObj = bodyAsObj["sprints"];
+                }
+            }
+            else {
+                var bodyObj = [];
+            }
             success = true;
             callback(bodyObj);
         });
@@ -39,7 +48,7 @@ sprintModels.getJiraSprintsByRapidBoardId = function getJiraSprintsByRapidBoardI
 sprintModels.getJiraSprintReport = function getJiraSprintReport(params, callback) {
     var options = {
         host: jira.jiraHost,
-        path: jira.jiraGreenhopperPath + '/rapid/charts/sprintreport?rapidViewId=' + params.rapidBoardId + '&sprintId=' + params.sprintId,
+        path: jira.jiraGreenhopperPath + 'rapid/charts/sprintreport?rapidViewId=' + params.rapidBoardId + '&sprintId=' + params.sprintId,
         auth: jira.jiraUserName + ':' + jira.jiraPassword,
         port: 443
     };
@@ -52,7 +61,7 @@ sprintModels.getJiraSprintReport = function getJiraSprintReport(params, callback
         jiraRes.on('end', function (e) {
             var bodyAsObj = JSON.parse(body);
             var bodyObj = bodyAsObj["sprints"];
-            var completeDateVal = bodyObj[i]["completeDate"];
+            var completeDateVal = bodyObj[0]["completeDate"];
             if (completeDateVal == 'None') {
                 completeDateVal = null;
             }
@@ -64,8 +73,8 @@ sprintModels.getJiraSprintReport = function getJiraSprintReport(params, callback
             qry += "FROM    sprint ";
             qry += "WHERE   id = :id";
             qry += ");";
-            sequelize.query(qry, { replacements: { id: bodyObj[i]["id"], sequence: bodyObj[i]["sequence"], name: bodyObj[i]["name"],
-                start_date: bodyObj[i]["startDate"], end_date: bodyObj[i]["endDate"], complete_date: completeDateVal },
+            sequelize.query(qry, { replacements: { id: bodyObj[0]["id"], sequence: bodyObj[0]["sequence"], name: bodyObj[0]["name"],
+                start_date: bodyObj[0]["startDate"], end_date: bodyObj[0]["endDate"], complete_date: completeDateVal },
                 type: sequelize.QueryTypes.INSERT }).spread(function (results, metadata) {
 
             });

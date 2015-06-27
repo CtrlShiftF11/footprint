@@ -75,11 +75,21 @@ router.post('/', function (req, res, next) {
         function syncSprints() {
             var deferred = Q.defer();
             try {
+                //Get all of the Rapid Boards and loop through them and for each Rapid Board get a list of Sprints
                 rapidboard.getRapidBoards(function (rapidBoardList) {
                     for (var i = 0; i < rapidBoardList.length; i++) {
-                        var params = {};
-                        params.projectId = projectList[i]["id"];
-                        sprint.getJiraSprintReport(params, function (success) {
+                        var sprintsByRapidBoardParams = {};
+                        sprintsByRapidBoardParams.rapidBoardId = rapidBoardList[i]["id"];
+
+                        //Loop through the list of sprints and use the current Rapid Board Id and Sprint Id combination to get a Sprint Report
+                        sprint.getJiraSprintsByRapidBoardId(sprintsByRapidBoardParams, function (sprintsList) {
+                            for (var j = 0; j < sprintsList.length; j++) {
+                                var sprintReportParams = {};
+                                sprintReportParams.rapidBoardId = sprintsByRapidBoardParams.rapidBoardId;
+                                sprintReportParams.sprintId = sprintsList[j]["id"];
+                                sprint.getJiraSprintReport(sprintReportParams, function (success) {
+                                });
+                            }
                         });
                     }
                     deferred.resolve('Synchronized Sprints');
