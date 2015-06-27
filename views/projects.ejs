@@ -2,25 +2,16 @@
 <html>
 <%= include partials/navmenu %>
 <head>
+    <!--<script src="/javascripts/highmaps.js"></script>-->
+    <script src="/javascripts/highcharts.js"></script>
+    <script src="/javascripts/heatmap.js"></script>
+    <script src="/javascripts/treemap.js"></script>
+    <script src="/javascripts/charts/projectmap.js"></script>
     <script>
         //        $(document).ajaxError(ajaxErrorHandler);
         $(document).ready(function () {
 
-            function getProjects() {
-                console.log('calling projects');
-                $.ajax({
-                    url: '/projects/',
-                    type: 'GET',
-                    contentType: 'application/json',
-                    dataType: 'json'
-                })
-                        .done(function (res) {
-                            console.log('result set...');
-                            console.log(res);
-                        });
-            }
-
-            getProjects();
+            getIssueCountsByProject();
 
         });
     </script>
@@ -28,8 +19,7 @@
 
 </head>
 <body>
-<h1><%= title %></h1>
 
-<h2>Projects</h2>
+<div id="projectMap" style="width:1000px; height: 800px;"></div>
 </body>
 </html>

@@ -47,6 +47,7 @@ router.post('/', function (req, res, next) {
                     deferred.reject(new Error('Error Synchronizing JIRA Rapid Boards'));
                 }
             });
+            return deferred.promise;
         }
 
         //This function is contingent upon completion of gathering JIRA Projects first!
@@ -67,6 +68,7 @@ router.post('/', function (req, res, next) {
             catch (err) {
                 deferred.reject('Error:' + err.message);
             }
+            return deferred.promise;
         }
 
         //This function relies on Rapid Boards!
@@ -86,6 +88,7 @@ router.post('/', function (req, res, next) {
             catch (err) {
                 deferred.reject('Error:' + err.message);
             }
+            return deferred.promise;
         }
 
         //This function should be called last as it has foreign keys pointing all over earth
@@ -103,8 +106,9 @@ router.post('/', function (req, res, next) {
                 });
             }
             catch (err) {
-                deferred.reject('Error:' + err.message);
+                deferred.reject('Error: ' + err.message);
             }
+            return deferred.promise;
         }
 
         Q.all([syncIssueTypes(), syncProjects(), syncRapidBoards()])
@@ -119,7 +123,7 @@ router.post('/', function (req, res, next) {
             }).then(function () {
                 syncIssues();
             }).then(function () {
-                res.sendStatus(200);
+                res.sendStatus(200); //All promises are finished and we can yield control back and end the request!
             })
             .done();
     }

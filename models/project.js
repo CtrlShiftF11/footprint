@@ -61,4 +61,19 @@ projectModels.getJiraProjects = function getJiraProjects(callback) {
     });
 };
 
+projectModels.getProjectIssueCounts = function getProjectIssueCounts(callback) {
+    var qry = "SELECT		a.id, ";
+    qry += "a.name, ";
+    qry += "( ";
+    qry += "SELECT	COUNT(*) ";
+    qry += "FROM	issue b ";
+    qry += "WHERE	b.project_id = a.id ";
+    qry += ") AS total_issues ";
+    qry += "FROM 		project a ";
+    qry += "ORDER BY 	3 DESC;"
+    sequelize.query(qry, { type: sequelize.QueryTypes.SELECT }).then(function (results) {
+        callback(results);
+    });
+};
+
 module.exports = projectModels;

@@ -38,7 +38,7 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
     fields += jira.epicIssueKeyDisplayFieldId + ',' + jira.teamDisplayFieldId + ',' + jira.storyPointsDisplayFieldId;
     var options = {
         host: jira.jiraHost,
-        path: jira.jiraRestPath + 'search?jql=' + encodeURIComponent(jql) + '&fields=' + encodeURIComponent(fields) + '&startAt=0&maxResults=500',
+        path: jira.jiraRestPath + 'search?jql=' + encodeURIComponent(jql) + '&fields=' + encodeURIComponent(fields) + '&startAt=0&maxResults=1000',
         auth: jira.jiraUserName + ':' + jira.jiraPassword,
         port: 443
     };
