@@ -60,25 +60,30 @@ sprintModels.getJiraSprintReport = function getJiraSprintReport(params, callback
         });
         jiraRes.on('end', function (e) {
             var bodyAsObj = JSON.parse(body);
-            var bodyObj = bodyAsObj["sprints"];
-            var completeDateVal = bodyObj[0]["completeDate"];
-            if (completeDateVal == 'None') {
-                completeDateVal = null;
-            }
-            var qry = "INSERT INTO sprint (id, sequence, name, state, start_date, end_date, complete_date) ";
-            qry += "SELECT :id, :sequence, :name, :state, :start_date, :end_date, :complete_date ";
-            qry += "WHERE ";
-            qry += "NOT EXISTS ( ";
-            qry += "SELECT  id ";
-            qry += "FROM    sprint ";
-            qry += "WHERE   id = :id";
-            qry += ");";
-            sequelize.query(qry, { replacements: { id: bodyObj[0]["id"], sequence: bodyObj[0]["sequence"], name: bodyObj[0]["name"],
-                start_date: bodyObj[0]["startDate"], end_date: bodyObj[0]["endDate"], complete_date: completeDateVal },
-                type: sequelize.QueryTypes.INSERT }).spread(function (results, metadata) {
+            if (typeof bodyAsObj["sprints"] !== 'undefined') {
+                var bodyObj = bodyAsObj["sprints"];
+                var completeDateVal = bodyObj[0]["completeDate"];
+                if (completeDateVal == 'None') {
+                    completeDateVal = null;
+                }
+                var qry = "INSERT INTO sprint (id, sequence, name, state, start_date, end_date, complete_date) ";
+                qry += "SELECT :id, :sequence, :name, :state, :start_date, :end_date, :complete_date ";
+                qry += "WHERE ";
+                qry += "NOT EXISTS ( ";
+                qry += "SELECT  id ";
+                qry += "FROM    sprint ";
+                qry += "WHERE   id = :id";
+                qry += ");";
+                sequelize.query(qry, { replacements: { id: bodyObj[0]["id"], sequence: bodyObj[0]["sequence"], name: bodyObj[0]["name"],
+                    start_date: bodyObj[0]["startDate"], end_date: bodyObj[0]["endDate"], complete_date: completeDateVal },
+                    type: sequelize.QueryTypes.INSERT }).spread(function (results, metadata) {
 
-            });
-            success = true;
+                });
+                success = true;
+            }
+            else {
+                success = true; //The call worked but returned no data from JIRA
+            }
             callback(success);
         });
         jiraRes.on('error', function (err) {

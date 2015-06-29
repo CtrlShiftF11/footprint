@@ -75,7 +75,7 @@ router.post('/', function (req, res, next) {
         function syncSprints() {
             var deferred = Q.defer();
             try {
-                //Get all of the Rapid Boards and loop through them and for each Rapid Board get a list of Sprints
+                //Get all of the Rapid Boards and loop through them and get a list of Sprints for each Rapid Board
                 rapidboard.getRapidBoards(function (rapidBoardList) {
                     for (var i = 0; i < rapidBoardList.length; i++) {
                         var sprintsByRapidBoardParams = {};
@@ -83,11 +83,15 @@ router.post('/', function (req, res, next) {
 
                         //Loop through the list of sprints and use the current Rapid Board Id and Sprint Id combination to get a Sprint Report
                         sprint.getJiraSprintsByRapidBoardId(sprintsByRapidBoardParams, function (sprintsList) {
+                            var sprintReportList = [];
                             for (var j = 0; j < sprintsList.length; j++) {
                                 var sprintReportParams = {};
                                 sprintReportParams.rapidBoardId = sprintsByRapidBoardParams.rapidBoardId;
                                 sprintReportParams.sprintId = sprintsList[j]["id"];
+                                sprintReportList.push(sprintReportParams);
+                                console.log('Calling Sprint Report for...\n' + 'Rapid Board ' + sprintReportParams.rapidBoardId + '\n' + 'Sprint ' + sprintReportParams.sprintId);
                                 sprint.getJiraSprintReport(sprintReportParams, function (success) {
+                                    console.log('successfully inserted sprint');
                                 });
                             }
                         });
@@ -110,6 +114,9 @@ router.post('/', function (req, res, next) {
                         var params = {};
                         params.projectId = projectList[i]["id"];
                         issue.getJiraIssues(params, function (success) {
+                            if (!success) {
+                                deferred.reject('Error: Unable to Synchronize Issues!');
+                            }
                         });
                     }
                     deferred.resolve('Synchronized Issues');
@@ -127,11 +134,17 @@ router.post('/', function (req, res, next) {
                 console.log(projectPromise);
                 console.log(rapidBoardPromise);
             }).then(function () {
-                syncEpics();
+                syncEpics(function (epicPromise) {
+                    console.log(epicPromise);
+                });
             }).then(function () {
-                syncSprints();
+                syncSprints(function (sprintPromise) {
+                    console.log(sprintPromise);
+                });
             }).then(function () {
-                syncIssues();
+                syncIssues(function (issuePromise) {
+                    console.log(issuePromise);
+                });
             }).then(function () {
                 res.sendStatus(200); //All promises are finished and we can yield control back and end the request!
             })
