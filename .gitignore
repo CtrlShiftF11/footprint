@@ -4,3 +4,4 @@ node_modules
 public/downloads/exports
 footprint.iml
 config/sequelizeconfig.js
+config/jiraconfig.js
