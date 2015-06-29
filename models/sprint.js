@@ -60,8 +60,8 @@ sprintModels.getJiraSprintReport = function getJiraSprintReport(params, callback
         });
         jiraRes.on('end', function (e) {
             var bodyAsObj = JSON.parse(body);
-            if (typeof bodyAsObj["sprints"] !== 'undefined') {
-                var bodyObj = bodyAsObj["sprints"];
+            if (typeof bodyAsObj["sprint"] !== 'undefined') {
+                var bodyObj = bodyAsObj["sprint"];
                 var completeDateVal = bodyObj[0]["completeDate"];
                 if (completeDateVal == 'None') {
                     completeDateVal = null;
