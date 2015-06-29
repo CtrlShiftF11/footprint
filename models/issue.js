@@ -25,7 +25,7 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
     var maxResults = 200;
     var options = setGetterOptions(params, startAt, maxResults);
     sourceAndLoadJiraIssues(options, true, function (totalIssues) {
-        console.log('Total Issues is ' + totalIssues);
+        //console.log('Total Issues is ' + totalIssues);
         if (totalIssues > maxResults) {
             var itWorked = false;
             for (var i = maxResults + 1; i < totalIssues; i + maxResults) {
@@ -73,8 +73,8 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
             });
             jiraRes.on('end', function (e) {
                 var bodyAsObj = JSON.parse(body);
-                console.log('issue body is...');
-                console.log(bodyAsObj);
+                //console.log('issue body is...');
+                //console.log(bodyAsObj);
                 if (typeof bodyAsObj["issues"] !== 'undefined') {
                     var bodyObj = bodyAsObj["issues"];
                     for (var i = 0; i < bodyObj.length; i++) {

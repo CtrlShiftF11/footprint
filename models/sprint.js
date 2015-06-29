@@ -10,7 +10,7 @@ var sequelize = new Sequelize(dbconfig.database, dbconfig.username, dbconfig.pas
 var sprintModels = {};
 
 sprintModels.getJiraSprintsByRapidBoardId = function getJiraSprintsByRapidBoardId(params, callback) {
-    console.log('now processing rapid board id ' + params.rapidBoardId);
+    //console.log('now processing rapid board id ' + params.rapidBoardId);
     var options = {
         host: jira.jiraHost,
         path: jira.jiraGreenhopperPath + 'sprintquery/' + params.rapidBoardId,

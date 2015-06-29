@@ -26,7 +26,7 @@ epicModels.getJiraEpicsByProjectId = function getJiraEpicsByProjectId(params, ca
     var maxResults = 200;
     var options = setGetterOptions(params, startAt, maxResults);
     sourceAndLoadJiraEpics(options, true, function (totalEpics) {
-        console.log('Total epics is ' + totalEpics);
+        //console.log('Total epics is ' + totalEpics);
         if (totalEpics > maxResults) {
             var itWorked = false;
             for (var i = maxResults + 1; i < totalEpics; i + maxResults) {
