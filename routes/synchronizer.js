@@ -59,6 +59,7 @@ router.post('/', function (req, res, next) {
                     for (var i = 0; i < projectList.length; i++) {
                         var params = {};
                         params.projectId = projectList[i]["id"];
+                        params.synchronous = true;
                         epic.getJiraEpicsByProjectId(params, function (success) {
                         });
                     }
@@ -77,18 +78,25 @@ router.post('/', function (req, res, next) {
             try {
                 //Get all of the Rapid Boards and loop through them and get a list of Sprints for each Rapid Board
                 rapidboard.getRapidBoards(function (rapidBoardList) {
+                    console.log('LOOPING THROUGH RAPID BOARDS');
                     for (var i = 0; i < rapidBoardList.length; i++) {
                         var sprintsByRapidBoardParams = {};
                         sprintsByRapidBoardParams.rapidBoardId = rapidBoardList[i]["id"];
+                        sprintsByRapidBoardParams.synchronous = true;
+                        console.log(rapidBoardList[i]["id"] + ' ' + rapidBoardList[i]["name"]);
 
                         //Loop through the list of sprints and use the current Rapid Board Id and Sprint Id combination to get a Sprint Report
                         sprint.getJiraSprintsByRapidBoardId(sprintsByRapidBoardParams, function (sprintsList) {
-                            var sprintReportList = [];
+
+                            console.log(sprintsList);
+                            var rapidBoardSprintCreated = false;
                             for (var j = 0; j < sprintsList.length; j++) {
                                 var sprintReportParams = {};
                                 sprintReportParams.rapidBoardId = sprintsByRapidBoardParams.rapidBoardId;
                                 sprintReportParams.sprintId = sprintsList[j]["id"];
-                                sprintReportList.push(sprintReportParams);
+                                //sprintReportParams.synchronous = true;
+                                rapidBoardSprintCreated = sprint.insertRapidBoardSprint(sprintReportParams);
+
                                 console.log('Calling Sprint Report for...\n' + 'Rapid Board ' + sprintReportParams.rapidBoardId + '\n' + 'Sprint ' + sprintReportParams.sprintId);
                                 sprint.getJiraSprintReport(sprintReportParams, function (success) {
                                     console.log('successfully inserted sprint');
@@ -98,8 +106,6 @@ router.post('/', function (req, res, next) {
                     }
                     deferred.resolve('Synchronized Sprints');
                 });
-
-
             }
             catch (err) {
                 deferred.reject('Error:' + err.message);
@@ -115,6 +121,7 @@ router.post('/', function (req, res, next) {
                     for (var i = 0; i < projectList.length; i++) {
                         var params = {};
                         params.projectId = projectList[i]["id"];
+                        //params.synchronous = true;
                         issue.getJiraIssues(params, function (success) {
                             if (!success) {
                                 deferred.reject('Error: Unable to Synchronize Issues!');
@@ -130,37 +137,29 @@ router.post('/', function (req, res, next) {
             return deferred.promise;
         }
 
-        syncSprints()
-            .then(function (sprintPromise) {
-                console.log(sprintPromise);
-                res.sendStatus(200);
-            });
-
-
-//        Q.all([syncIssueTypes(), syncProjects(), syncRapidBoards()])
-//            .spread(function (issueTypePromise, projectPromise, rapidBoardPromise) {
-//                console.log(issueTypePromise);
-//                console.log(projectPromise);
-//                console.log(rapidBoardPromise);
-//                res.sendStatus(200); //All promises are finished and we can yield control back and end the request!
-//            })
-//            .then(function () {
-//                syncEpics(function (epicPromise) {
-//                    console.log(epicPromise);
-//                });
-//            }).then(function () {
-//                syncSprints(function (sprintPromise) {
-//                    console.log(sprintPromise);
-//                });
-//            }).then(function () {
-//                syncIssues(function (issuePromise) {
-//                    console.log(issuePromise);
-//                });
-//            }).then(function () {
-//                res.sendStatus(200); //All promises are finished and we can yield control back and end the request!
-//            })
-//            .done();
-
+        //Call the ball...
+        Q.all([syncIssueTypes(), syncProjects(), syncRapidBoards()])
+            .spread(function (issueTypePromise, projectPromise, rapidBoardPromise) {
+                console.log(issueTypePromise);
+                console.log(projectPromise);
+                console.log(rapidBoardPromise);
+            })
+            .then(function () {
+                syncEpics(function (epicPromise) {
+                    console.log(epicPromise);
+                });
+            }).then(function () {
+                syncSprints(function (sprintPromise) {
+                    console.log(sprintPromise);
+                });
+            }).then(function () {
+                syncIssues(function (issuePromise) {
+                    console.log(issuePromise);
+                });
+            }).then(function () {
+                res.sendStatus(200); //All promises are finished and we can yield control back and end the request!
+            })
+            .done();
     }
     else {
         res.status(500).send({ error: 'You do not have permission use this feature.'});

@@ -23,12 +23,7 @@ issueTypeModels.getJiraIssueTypes = function getJiraIssueTypes(callback) {
             body += d;
         });
         jiraRes.on('end', function (e) {
-            //var bodyAsObj = JSON.parse(body);
-            //var bodyObj = bodyAsObj["issues"];
             var bodyObj = JSON.parse(body);
-            console.log(body.length);
-            console.log('here is the body');
-            console.log(bodyObj);
             for (var i = 0; i < bodyObj.length; i++) {
                 var qry = "INSERT INTO issue_type (id, self, name, subtask, description, icon_url) ";
                 qry += "SELECT  :id, :self, :name, :subtask, :description, :icon_url ";

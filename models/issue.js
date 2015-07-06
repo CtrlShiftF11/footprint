@@ -1,4 +1,5 @@
 var https = require('https');
+var httpSync = require('http-sync');
 var jira = require('../config/jiraconfig');
 var dbconfig = require('../config/sequelizeconfig');
 var Sequelize = require('sequelize');
@@ -25,7 +26,6 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
     var maxResults = 200;
     var options = setGetterOptions(params, startAt, maxResults);
     sourceAndLoadJiraIssues(options, true, function (totalIssues) {
-        //console.log('Total Issues is ' + totalIssues);
         if (totalIssues > maxResults) {
             var itWorked = false;
             for (var i = maxResults + 1; i < totalIssues; i + maxResults) {
@@ -60,48 +60,41 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
             host: jira.jiraHost,
             path: jira.jiraRestPath + 'search?jql=' + encodeURIComponent(jql) + '&fields=' + encodeURIComponent(fields) + '&startAt=' + startAt + '&maxResults=' + maxResults,
             auth: jira.jiraUserName + ':' + jira.jiraPassword,
-            port: 443
+            port: 443,
+            keepAlive: true
         };
     }
 
     function sourceAndLoadJiraIssues(getterOptions, itFeelsLikeTheVeryFirstTime, callback) {
-        var success = false;
-        var body = '';
-        https.get(getterOptions, function (jiraRes) {
-            jiraRes.on('data', function (d) {
-                body += d;
+        if (typeof params.synchronous !== 'undefined' && params.synchronous == true) {
+            var jiraReq = httpSync.request({
+                method: 'GET',
+                headers: {
+                    Authorization: getterOptions.auth,
+                    "Content-Type": "application/json"
+                },
+                protocol: 'https',
+                host: getterOptions.host,
+                path: getterOptions.path,
+                port: getterOptions.port
             });
-            jiraRes.on('end', function (e) {
-                var bodyAsObj = JSON.parse(body);
-                //console.log('issue body is...');
-                //console.log(bodyAsObj);
+
+            var requestTimedOut = false;
+            jiraReq.setTimeout(20000, function () {
+                console.log('Request Timed Out');
+                console.log('Unable to gather JIRA data.');
+                requestTimedOut = true;
+                callback(false);
+            });
+            var jiraRes = jiraReq.end();
+            if (!requestTimedOut) {
+                var insertWorked = false;
+                var bodyAsObj = JSON.parse(jiraRes.body);
                 if (typeof bodyAsObj["issues"] !== 'undefined') {
                     var bodyObj = bodyAsObj["issues"];
-                    for (var i = 0; i < bodyObj.length; i++) {
-                        var qry = "INSERT INTO issue (id, self, key, summary, epic_key, team_id, issue_type_id, description, project_id, updated, created, status_id, story_points, resolution_date) ";
-                        qry += "SELECT  :id, :self, :key, :summary, :epic_key, :team_id, :issue_type_id, :description, :project_id, :updated, :created, :status_id, :story_points, :resolution_date ";
-                        qry += "WHERE ";
-                        qry += "NOT EXISTS ( ";
-                        qry += "SELECT  id ";
-                        qry += "FROM    issue ";
-                        qry += "WHERE   id = :id ";
-                        if (!typeof params.epicKey === 'undefined') {
-                            qry += "AND epic_key <> :epic_key ";
-                        }
-                        qry += ");";
-                        var teamId = null;
-                        if (bodyObj[i]["fields"][jira.teamDisplayFieldId] != null) {
-                            teamId = bodyObj[i]["fields"][jira.teamDisplayFieldId]["id"];
-                        }
-                        sequelize.query(qry, { replacements: { id: bodyObj[i]["id"], self: bodyObj[i]["self"], key: bodyObj[i]["key"], summary: bodyObj[i]["fields"]["summary"],
-                            description: bodyObj[i]["fields"]["description"], project_id: bodyObj[i]["fields"]["project"]["id"], updated: bodyObj[i]["fields"]["updated"],
-                            created: bodyObj[i]["fields"]["created"], status_id: bodyObj[i]["fields"]["status"]["id"], issue_type_id: bodyObj[i]["fields"]["issuetype"]["id"],
-                            epic_key: bodyObj[i]["fields"][jira.epicIssueKeyDisplayFieldId], team_id: teamId,
-                            story_points: bodyObj[i]["fields"][jira.storyPointsDisplayFieldId], resolution_date: bodyObj[i]["fields"]["resolutiondate"]},
-                            type: sequelize.QueryTypes.INSERT }).spread(function (results, metadata) {
-
-                        });
-                    }
+                    var insertIssueParams = {};
+                    insertIssueParams.bodyObj = bodyObj;
+                    insertWorked = insertIssue(insertIssueParams);
                     success = true;
                 }
                 else {
@@ -113,12 +106,77 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
                 else {
                     callback(success);
                 }
+            }
+        }
+        else {
+            var success = false;
+            var body = '';
+            https.get(getterOptions, function (jiraRes) {
+                jiraRes.on('data', function (d) {
+                    body += d;
+                });
+                jiraRes.on('end', function (e) {
+                    var insertWorked = false;
+                    var bodyAsObj = JSON.parse(body);
+                    if (typeof bodyAsObj["issues"] !== 'undefined') {
+                        var bodyObj = bodyAsObj["issues"];
+                        for (var i = 0; i < bodyObj.length; i++) {
+                            insertIssueParams = {};
+                            insertIssueParams.bodyObj = bodyObj;
+                            insertWorked = insertIssue(insertIssueParams);
+                        }
+                        success = true;
+                    }
+                    else {
+                        success = true; //The call worked but returned no data from JIRA
+                    }
+                    if (itFeelsLikeTheVeryFirstTime) {
+                        callback(bodyAsObj["total"]);
+                    }
+                    else {
+                        callback(success);
+                    }
+                });
+                jiraRes.on('error', function (err) {
+                    console.log('Unable to gather JIRA data.\n' + err.message);
+                    callback(false);
+                });
             });
-            jiraRes.on('error', function (err) {
-                console.log('Unable to gather JIRA data.\n' + err.message);
-                callback(false);
-            });
-        });
+        }
+    }
+
+    function insertIssue(params) {
+        try {
+            for (var i = 0; i < params.bodyObj.length; i++) {
+                var qry = "INSERT INTO issue (id, self, key, summary, epic_key, team_id, issue_type_id, description, project_id, updated, created, status_id, story_points, resolution_date) ";
+                qry += "SELECT  :id, :self, :key, :summary, :epic_key, :team_id, :issue_type_id, :description, :project_id, :updated, :created, :status_id, :story_points, :resolution_date ";
+                qry += "WHERE ";
+                qry += "NOT EXISTS ( ";
+                qry += "SELECT  id ";
+                qry += "FROM    issue ";
+                qry += "WHERE   id = :id ";
+                if (typeof params.epicKey !== 'undefined') {
+                    qry += "AND epic_key <> :epic_key ";
+                }
+                qry += ");";
+                var teamId = null;
+                if (params.bodyObj[i]["fields"][jira.teamDisplayFieldId] != null) {
+                    teamId = params.bodyObj[i]["fields"][jira.teamDisplayFieldId]["id"];
+                }
+                sequelize.query(qry, { replacements: { id: params.bodyObj[i]["id"], self: params.bodyObj[i]["self"], key: params.bodyObj[i]["key"], summary: params.bodyObj[i]["fields"]["summary"],
+                    description: params.bodyObj[i]["fields"]["description"], project_id: params.bodyObj[i]["fields"]["project"]["id"], updated: params.bodyObj[i]["fields"]["updated"],
+                    created: params.bodyObj[i]["fields"]["created"], status_id: params.bodyObj[i]["fields"]["status"]["id"], issue_type_id: params.bodyObj[i]["fields"]["issuetype"]["id"],
+                    epic_key: params.bodyObj[i]["fields"][jira.epicIssueKeyDisplayFieldId], team_id: teamId,
+                    story_points: params.bodyObj[i]["fields"][jira.storyPointsDisplayFieldId], resolution_date: params.bodyObj[i]["fields"]["resolutiondate"]},
+                    type: sequelize.QueryTypes.INSERT }).spread(function (results, metadata) {
+                    return true;
+                });
+            }
+        }
+        catch (err) {
+            console.log('Error: ' + err.message);
+            return false;
+        }
     }
 };
 
