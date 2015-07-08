@@ -29,7 +29,7 @@ projectModels.getJiraProjects = function getJiraProjects(callback) {
     };
     var success = false;
     var body = '';
-    https.get(options, function (jiraRes) {
+    var jiraReq = https.get(options, function (jiraRes) {
         jiraRes.on('data', function (d) {
             body += d;
         });
@@ -50,11 +50,13 @@ projectModels.getJiraProjects = function getJiraProjects(callback) {
                     //Wow - I can't believe I finally figured this out! I'm now the 3rd smartest person in Greenwood.
                 });
             }
+            jiraReq.end();
             success = true;
             callback(success);
         });
         jiraRes.on('error', function (err) {
             console.log('Unable to gather JIRA data.\n' + err.message);
+            jiraReq.end();
             success = false;
             callback(success);
         });

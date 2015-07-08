@@ -55,7 +55,7 @@ sprintModels.getJiraSprintsByRapidBoardId = function getJiraSprintsByRapidBoardI
         };
         var success = false;
         var body = '';
-        https.get(options, function (jiraRes) {
+        var jiraReq = https.get(options, function (jiraRes) {
             jiraRes.on('data', function (d) {
                 body += d;
             });
@@ -79,6 +79,7 @@ sprintModels.getJiraSprintsByRapidBoardId = function getJiraSprintsByRapidBoardI
                 callback(success);
             });
         });
+        jiraReq.end();
     }
 
 };
@@ -109,10 +110,12 @@ sprintModels.getJiraSprintReport = function getJiraSprintReport(params, callback
     if (typeof params.synchronous !== 'undefined' && params.synchronous === true) {
         var jiraReq = httpSync.request({
             method: 'GET',
-            headers: {
-                Authorization: jira.jiraUserName + ':' + jira.jiraPassword,
-                "Content-Type": "application/json"
-            },
+//            headers: {
+//                Authorization: jira.jiraUserName + ':' + jira.jiraPassword,
+//                "Content-Type": "application/json"
+//            },
+            user: jira.jiraUserName,
+            password: jira.jiraPassword,
             protocol: 'https',
             host: jira.jiraHost,
             path: jira.jiraGreenhopperPath + 'rapid/charts/sprintreport?rapidViewId=' + params.rapidBoardId + '&sprintId=' + params.sprintId,
@@ -139,42 +142,49 @@ sprintModels.getJiraSprintReport = function getJiraSprintReport(params, callback
         }
     }
     else {
-        var options = {
-            host: jira.jiraHost,
-            path: jira.jiraGreenhopperPath + 'rapid/charts/sprintreport?rapidViewId=' + params.rapidBoardId + '&sprintId=' + params.sprintId,
-            auth: jira.jiraUserName + ':' + jira.jiraPassword,
-            port: 443,
-            keepAlive: true
-        };
-        var success = false;
-        var body = '';
-        https.get(options, function (jiraRes) {
-            jiraRes.on('data', function (d) {
-                body += d;
+        try {
+            var options = {
+                host: jira.jiraHost,
+                path: jira.jiraGreenhopperPath + 'rapid/charts/sprintreport?rapidViewId=' + params.rapidBoardId + '&sprintId=' + params.sprintId,
+                auth: jira.jiraUserName + ':' + jira.jiraPassword,
+                port: 443,
+                keepAlive: true,
+                keepAliveMsecs: 20000
+            };
+            var success = false;
+            var body = '';
+            var jiraReq = https.get(options, function (jiraRes) {
+                jiraRes.on('data', function (d) {
+                    body += d;
+                });
+                jiraRes.on('end', function (e) {
+                    var insertWorked = false;
+                    var bodyAsObj = JSON.parse(body);
+                    console.log('inside end event of https call...');
+                    console.log(bodyAsObj);
+                    console.log(bodyAsObj["sprint"]);
+                    if (typeof bodyAsObj["sprint"] !== 'undefined') {
+                        console.log('if condition met');
+                        var bodyObj = bodyAsObj["sprint"];
+                        insertWorked = insertSprint(bodyObj);
+                        success = true;
+                    }
+                    else {
+                        success = true; //The call worked but returned no data from JIRA
+                    }
+                    callback(success);
+                });
+                jiraRes.on('error', function (err) {
+                    console.log('Unable to gather JIRA data.\n' + err.message);
+                    success = false;
+                    callback(err);
+                });
             });
-            jiraRes.on('end', function (e) {
-                var insertWorked = false;
-                var bodyAsObj = JSON.parse(body);
-                console.log('inside end event of https call...');
-                console.log(bodyAsObj);
-                console.log(bodyAsObj["sprint"]);
-                if (typeof bodyAsObj["sprint"] !== 'undefined') {
-                    console.log('if condition met');
-                    var bodyObj = bodyAsObj["sprint"];
-                    insertWorked = insertSprint(bodyObj);
-                    success = true;
-                }
-                else {
-                    success = true; //The call worked but returned no data from JIRA
-                }
-                callback(success);
-            });
-            jiraRes.on('error', function (err) {
-                console.log('Unable to gather JIRA data.\n' + err.message);
-                success = false;
-                callback(err);
-            });
-        });
+            jiraReq.end();
+        }
+        catch (err) {
+            console.log('Error: ' + err.message);
+        }
     }
 
     function insertSprint(bodyObj) {

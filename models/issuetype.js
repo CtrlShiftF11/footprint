@@ -18,7 +18,7 @@ issueTypeModels.getJiraIssueTypes = function getJiraIssueTypes(callback) {
     };
     var success = false;
     var body = '';
-    https.get(options, function (jiraRes) {
+    var jiraReq = https.get(options, function (jiraRes) {
         jiraRes.on('data', function (d) {
             body += d;
         });
@@ -40,11 +40,13 @@ issueTypeModels.getJiraIssueTypes = function getJiraIssueTypes(callback) {
                 });
             }
             success = true;
+            jiraReq.end();
             callback(success);
         });
         jiraRes.on('error', function (err) {
             console.log('Unable to gather JIRA data.\n' + err.message);
             success = false;
+            jiraReq.end();
             callback(success);
         });
     });

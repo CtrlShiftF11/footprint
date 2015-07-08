@@ -1,6 +1,5 @@
 var express = require('express');
 var router = express.Router();
-var Q = require('q');
 var project = require('../models/project');
 
 router.get('/', function (req, res, next) {
@@ -16,7 +15,7 @@ router.get('/', function (req, res, next) {
 router.get('/issuecounts', function (req, res, next) {
     project.getProjectIssueCounts(function (issueCounts) {
         res.json(issueCounts);
-    })
+    });
 });
 
 module.exports = router;

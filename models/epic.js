@@ -29,7 +29,7 @@ epicModels.getJiraEpicsByProjectId = function getJiraEpicsByProjectId(params, ca
         console.log('Total epics is ' + totalEpics);
         if (totalEpics > maxResults) {
             var itWorked = false;
-            for (var i = maxResults + 1; i < totalEpics; i + maxResults) {
+            for (var i = (maxResults + 1); i < totalEpics; i = (i + maxResults)) {
                 options = setGetterOptions(params, i, maxResults);
                 sourceAndLoadJiraEpics(options, false, function (itWorked) {
                     if (!itWorked) {
@@ -59,10 +59,12 @@ epicModels.getJiraEpicsByProjectId = function getJiraEpicsByProjectId(params, ca
             console.log(getterOptions.path);
             var jiraReq = httpSync.request({
                 method: 'GET',
-                headers: {
-                    Authorization: getterOptions.auth,
-                    "Content-Type": "application/json"
-                },
+//                headers: {
+//                    Authorization: 'Basic ' + getterOptions.auth,
+//                    "Content-Type": "application/json"
+//                },
+                user: jira.jiraUserName,
+                password: jira.jiraPassword,
                 protocol: 'https',
                 host: getterOptions.host,
                 path: getterOptions.path,
@@ -105,7 +107,7 @@ epicModels.getJiraEpicsByProjectId = function getJiraEpicsByProjectId(params, ca
         else {
             var success = false;
             var body = '';
-            https.get(getterOptions, function (jiraRes) {
+            var jiraReq = https.get(getterOptions, function (jiraRes) {
                 jiraRes.on('data', function (d) {
                     body += d;
                 });
@@ -134,6 +136,7 @@ epicModels.getJiraEpicsByProjectId = function getJiraEpicsByProjectId(params, ca
                     callback(false);
                 });
             });
+            jiraReq.end();
         }
     }
 

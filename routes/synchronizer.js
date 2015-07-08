@@ -59,7 +59,7 @@ router.post('/', function (req, res, next) {
                     for (var i = 0; i < projectList.length; i++) {
                         var params = {};
                         params.projectId = projectList[i]["id"];
-                        params.synchronous = true;
+                        //params.synchronous = true;
                         epic.getJiraEpicsByProjectId(params, function (success) {
                         });
                     }
@@ -94,7 +94,7 @@ router.post('/', function (req, res, next) {
                                 var sprintReportParams = {};
                                 sprintReportParams.rapidBoardId = sprintsByRapidBoardParams.rapidBoardId;
                                 sprintReportParams.sprintId = sprintsList[j]["id"];
-                                //sprintReportParams.synchronous = true;
+                                sprintReportParams.synchronous = true;
                                 rapidBoardSprintCreated = sprint.insertRapidBoardSprint(sprintReportParams);
 
                                 console.log('Calling Sprint Report for...\n' + 'Rapid Board ' + sprintReportParams.rapidBoardId + '\n' + 'Sprint ' + sprintReportParams.sprintId);
@@ -117,18 +117,27 @@ router.post('/', function (req, res, next) {
         function syncIssues() {
             var deferred = Q.defer();
             try {
-                project.getProjects(function (projectList) {
-                    for (var i = 0; i < projectList.length; i++) {
-                        var params = {};
-                        params.projectId = projectList[i]["id"];
-                        //params.synchronous = true;
-                        issue.getJiraIssues(params, function (success) {
-                            if (!success) {
-                                deferred.reject('Error: Unable to Synchronize Issues!');
-                            }
-                        });
+//                project.getProjects(function (projectList) {
+//                    for (var i = 0; i < projectList.length; i++) {
+//                        var params = {};
+//                        params.projectId = projectList[i]["id"];
+//                        //params.synchronous = true;
+//                        issue.getJiraIssues(params, function (success) {
+//                            if (!success) {
+//                                deferred.reject('Error: Unable to Synchronize Issues!');
+//                            }
+//                        });
+//                    }
+//                    deferred.resolve('Synchronized Issues');
+//                });
+                var params = {};
+                issue.getJiraIssues(params, function (success) {
+                    if (!success) {
+                        deferred.reject('Error: Unable to Synchronize Issues!');
                     }
-                    deferred.resolve('Synchronized Issues');
+                    else {
+                        deferred.resolve('Synchronized Issues');
+                    }
                 });
             }
             catch (err) {
@@ -137,33 +146,69 @@ router.post('/', function (req, res, next) {
             return deferred.promise;
         }
 
+//SADLY ALL OF THE FOLLOWING CODE IS NOT WORKING WHEN EXECUTING IT AS ONE SHOT
+//IF YOU NEED TO SEED YOUR DATA WAREHOUSE USING THIS ROUTE THEN YOU CAN RUN IT ALL SEPARATELY
+//BY UNCOMMENTING EACH BLOCK.  I KNOW THAT THIS IS NOT IDEAL OR A LONG TERM SOLUTION SO
+//PLEASE DON'T E-LECTURE ME...
+
         //Call the ball...
-        Q.all([syncIssueTypes(), syncProjects(), syncRapidBoards()])
-            .spread(function (issueTypePromise, projectPromise, rapidBoardPromise) {
-                console.log(issueTypePromise);
-                console.log(projectPromise);
-                console.log(rapidBoardPromise);
-            })
-            .then(function () {
-                syncEpics(function (epicPromise) {
-                    console.log(epicPromise);
-                });
-            }).then(function () {
-                syncSprints(function (sprintPromise) {
-                    console.log(sprintPromise);
-                });
-            }).then(function () {
-                syncIssues(function (issuePromise) {
-                    console.log(issuePromise);
-                });
-            }).then(function () {
-                res.sendStatus(200); //All promises are finished and we can yield control back and end the request!
-            })
-            .done();
+//        Q.all([syncIssueTypes(), syncProjects(), syncRapidBoards()])
+//            .spread(function (issueTypePromise, projectPromise, rapidBoardPromise) {
+//                console.log(issueTypePromise);
+//                console.log(projectPromise);
+//                console.log(rapidBoardPromise);
+//            })
+//            .then(function () {
+//                syncEpics(function (epicPromise) {
+//                    console.log(epicPromise);
+//                });
+//            }).then(function () {
+//                syncSprints(function (sprintPromise) {
+//                    console.log(sprintPromise);
+//                });
+//            }).then(function () {
+//                syncIssues(function (issuePromise) {
+//                    console.log(issuePromise);
+//                });
+//            }).then(function () {
+//                res.sendStatus(200); //All promises are finished and we can yield control back and end the request!
+//            })
+//            .done();
+
+
+//SEPARATE CALLS AS DESCRIBED ON LINE 140 UP THERE...
+//        Q.all([syncIssueTypes(), syncProjects(), syncRapidBoards()])
+//            .spread(function (issueTypePromise, projectPromise, rapidBoardPromise) {
+//                console.log(issueTypePromise);
+//                console.log(projectPromise);
+//                console.log(rapidBoardPromise);
+//            }).then(function () {
+//                res.sendStatus(200);
+//            }).done();
+
+//        syncEpics()
+//            .then(function (epicPromise) {
+//                console.log(epicPromise);
+//                res.sendStatus(200);
+//            });
+
+//        syncSprints()
+//            .then(function (sprintPromise) {
+//                console.log(sprintPromise);
+//                res.sendStatus(200);
+//            });
+
+        syncIssues()
+            .then(function (issuePromise) {
+                console.log(issuePromise);
+                res.sendStatus(200);
+            });
+
     }
     else {
         res.status(500).send({ error: 'You do not have permission use this feature.'});
     }
-
 });
+
+
 module.exports = router;

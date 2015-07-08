@@ -23,17 +23,20 @@ issueModels.getIssues = function getIssues(params, callback) {
 //ProjectId is Required but EpicId is an optional filter parameter
 issueModels.getJiraIssues = function getJiraIssues(params, callback) {
     var startAt = 0;
-    var maxResults = 200;
+    var maxResults = 100;
     var options = setGetterOptions(params, startAt, maxResults);
     sourceAndLoadJiraIssues(options, true, function (totalIssues) {
+        console.log('There are ' + totalIssues + ' for project ' + params.projectId);
         if (totalIssues > maxResults) {
             var itWorked = false;
-            for (var i = maxResults + 1; i < totalIssues; i + maxResults) {
+            for (var i = (maxResults + 1); i < totalIssues; i = (i + maxResults)) {
+                console.log('inside the caller - i is now equal to ' + i);
                 options = setGetterOptions(params, i, maxResults);
-                itWorked = sourceAndLoadJiraIssues(options, false);
-                if (!itWorked) {
-                    callback(false);
-                }
+                itWorked = sourceAndLoadJiraIssues(options, false, function (itWorked) {
+                    if (!itWorked) {
+                        callback(false);
+                    }
+                });
             }
             callback(itWorked);
         }
@@ -49,10 +52,11 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
             }
             var jqlSort = 'ORDER BY ' + params.sort + ' ' + params.sortDir;
         }
-        var jql = 'project=' + params.projectId + ' AND issuetype=Story';
-        if (!typeof params.epicKey === 'undefined') {
-            jql += ' AND ' + jira.epicIssueKeyJQLFieldId + '=' + params.epicKey;
-        }
+//        var jql = 'project=' + params.projectId + ' AND issuetype=Story';
+//        if (!typeof params.epicKey === 'undefined') {
+//            jql += ' AND ' + jira.epicIssueKeyJQLFieldId + '=' + params.epicKey;
+//        }
+        var jql = 'issuetype=Story';
         var fields = 'project,issuetype,id,key,summary,description,status,issuetype,updated,created,avatarUrls,';
         fields += jira.epicIssueKeyDisplayFieldId + ',' + jira.teamDisplayFieldId + ',' + jira.storyPointsDisplayFieldId;
 
@@ -61,7 +65,8 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
             path: jira.jiraRestPath + 'search?jql=' + encodeURIComponent(jql) + '&fields=' + encodeURIComponent(fields) + '&startAt=' + startAt + '&maxResults=' + maxResults,
             auth: jira.jiraUserName + ':' + jira.jiraPassword,
             port: 443,
-            keepAlive: true
+            keepAlive: true,
+            keepAliveMsecs: 200000
         };
     }
 
@@ -109,39 +114,46 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
             }
         }
         else {
-            var success = false;
-            var body = '';
-            https.get(getterOptions, function (jiraRes) {
-                jiraRes.on('data', function (d) {
-                    body += d;
-                });
-                jiraRes.on('end', function (e) {
-                    var insertWorked = false;
-                    var bodyAsObj = JSON.parse(body);
-                    if (typeof bodyAsObj["issues"] !== 'undefined') {
-                        var bodyObj = bodyAsObj["issues"];
-                        for (var i = 0; i < bodyObj.length; i++) {
-                            insertIssueParams = {};
-                            insertIssueParams.bodyObj = bodyObj;
-                            insertWorked = insertIssue(insertIssueParams);
+            try {
+                var success = false;
+                var body = '';
+                var jiraReq = https.get(getterOptions, function (jiraRes) {
+                    jiraRes.on('data', function (d) {
+                        body += d;
+                    });
+                    jiraRes.on('end', function (e) {
+                        var insertWorked = false;
+                        var bodyAsObj = JSON.parse(body);
+                        if (typeof bodyAsObj["issues"] !== 'undefined') {
+                            var bodyObj = bodyAsObj["issues"];
+                            for (var i = 0; i < bodyObj.length; i++) {
+                                insertIssueParams = {};
+                                insertIssueParams.bodyObj = bodyObj;
+                                insertWorked = insertIssue(insertIssueParams);
+                            }
+                            success = true;
                         }
-                        success = true;
-                    }
-                    else {
-                        success = true; //The call worked but returned no data from JIRA
-                    }
-                    if (itFeelsLikeTheVeryFirstTime) {
-                        callback(bodyAsObj["total"]);
-                    }
-                    else {
-                        callback(success);
-                    }
+                        else {
+                            success = true; //The call worked but returned no data from JIRA
+                        }
+                        jiraReq.end();
+                        if (itFeelsLikeTheVeryFirstTime) {
+                            callback(bodyAsObj["total"]);
+                        }
+                        else {
+                            callback(success);
+                        }
+                    });
+                    jiraRes.on('error', function (err) {
+                        console.log('Unable to gather JIRA data.\n' + err.message);
+                        jiraReq.end();
+                        callback(false);
+                    });
                 });
-                jiraRes.on('error', function (err) {
-                    console.log('Unable to gather JIRA data.\n' + err.message);
-                    callback(false);
-                });
-            });
+            }
+            catch (err) {
+                console.log('Error: ' + err.message);
+            }
         }
     }
 

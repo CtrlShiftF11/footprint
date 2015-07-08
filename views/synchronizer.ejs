@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<%= include partials/navmenu %>
+<head>
+    <!--<script src="/javascripts/highmaps.js"></script>-->
+    <script src="/javascripts/highcharts.js"></script>
+    <script src="/javascripts/heatmap.js"></script>
+    <script src="/javascripts/treemap.js"></script>
+    <script src="/javascripts/charts/projectmap.js"></script>
+    <script>
+        //        $(document).ajaxError(ajaxErrorHandler);
+        $(document).ready(function () {
+
+            var projectDeferred = $.Deferred();
+            var issueTypeDeferred = $.Deferred();
+            var rapidBoardDeferred = $.Deferred();
+            var epicDeferred = $.Deferred();
+            var sprintDeferred = $.Deferred();
+            var issueDeferred = $.Deferred();
+
+            function syncIssueTypes(issueTypeDeferred) {
+                $.getJSON('/issuetypes')
+                        .done(function (success) {
+                            issueTypeDeferred.resolve(success);
+                            return issueTypeDeferred.promise();
+                        })
+                        .fail(function (jqxhr, textStatus, error) {
+                            var err = textStatus + ", " + error;
+                            issueTypeDeferred.reject("Issue Type Failure: " + err);
+                            return issueTypeDeferred.promise();
+                        });
+            }
+
+            function syncProjects(projectDeferred) {
+                $.getJSON('/projects')
+                        .done(function (projectList) {
+                            projectDeferred.resolve(projectList);
+                            return issueTypeDeferred.promise();
+                        })
+                        .fail(function (jqxhr, textStatus, error) {
+                            var err = textStatus + ", " + error;
+                            projectDeferred.reject("Project Sync Failure: " + err);
+                            return issueTypeDeferred.promise();
+                        });
+            }
+
+            function syncRapidBoards(rapidBoardDeferred) {
+                $.getJSON('/rapidboards')
+                        .done(function (rapidBoardList) {
+                            rapidBoardDeferred.resolve(rapidBoardList);
+                            return rapidBoardDeferred.promise();
+                        })
+                        .fail(function (jqxhr, textStatus, error) {
+                            var err = textStatus + ", " + error;
+                            rapidBoardDeferred.reject("Rapid Board Sync Failure: " + err);
+                            return rapidBoardDeferred.promise();
+                        });
+            }
+
+            function syncEpics(epicDeferred, projectId) {
+                $.ajax('/epics/' + projectId)
+                        .done(function (success) {
+                            epicDeferred.resolve(success);
+                            return epicDeferred.promise();
+                        })
+                        .fail(function (jqxhr, textStatus, error) {
+                            var err = textStatus + ", " + error;
+                            epicDeferred.reject("Epic Sync Failure: " + err);
+                            return epicDeferred.promise();
+                        });
+            }
+
+            function syncSprints(sprintDeferred, params) {
+                $.ajax({
+                    url: "/sprints",
+                    type: "POST",
+                    contentType: "application/json",
+                    dataType: "json",
+                    data: params
+                })
+                        .done(function (success) {
+                            sprintDeferred.resolve(success)
+                            return sprintDeferred.promise();
+                        })
+            }
+
+            function syncIssues() {
+
+            }
+
+        });
+    </script>
+
+
+</head>
+<body>
+
+<div id="projectMap" style="width:1000px; height: 800px;"></div>
+</body>
+</html>
