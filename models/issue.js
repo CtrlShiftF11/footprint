@@ -10,11 +10,44 @@ var sequelize = new Sequelize(dbconfig.database, dbconfig.username, dbconfig.pas
 
 var issueModels = {};
 
+issueModels.getIssueTypeCounts = function (params, callback) {
+    var qry = "SELECT		a.project_id, a.issue_type_id, b.name, COUNT(*) AS issue_count ";
+    qry += "FROM		    issue a ";
+    qry += "INNER JOIN		issue_type b ";
+    qry += "ON				b.id = a.issue_type_id ";
+    qry += "WHERE		    a.project_id = :project_id ";
+    qry += "GROUP BY		a.project_id, a.issue_type_id, b.name ";
+    qry += "ORDER BY		issue_count DESC";
+    sequelize.query(qry, { replacements: { project_id: params.projectId }, type: sequelize.QueryTypes.SELECT }).then(function (results) {
+        callback(results);
+    });
+}
+
 issueModels.getIssues = function getIssues(params, callback) {
     var qry = "SELECT   id, self, key, summary, epic_key, team_id, issue_type_id, description, project_id, updated, created, status_id, story_points, resolution_date ";
     qry += "FROM        issue ";
     qry += "WHERE       project_id = :project_id ";
     qry += "ORDER BY    summary";
+    sequelize.query(qry, { replacements: { project_id: params.projectId }, type: sequelize.QueryTypes.SELECT }).then(function (results) {
+        callback(results);
+    });
+};
+
+issueModels.getFilteredIssueCounts = function getFilteredIssueCounts(params, callback) {
+    var qry = "SELECT	date(updated) AS updated, COUNT(*) AS issue_count ";
+    qry += "FROM		issue ";
+    qry += "WHERE		project_id = :project_id ";
+    if (typeof params.statusFilterType !== 'undefined' && params.statusFilterType === 'NOT IN') {
+        qry += "AND         status_id NOT IN (" + params.statusId.join(',') + ") ";
+    }
+    else {
+        qry += "AND         status_id IN (" + params.statusId.join(',') + ") ";
+    }
+    if (typeof params.issueTypeId !== 'undefined') {
+        qry += "AND         issue_type_id IN (" + params.issueTypeId.join(',') + ") ";
+    }
+    qry += "GROUP BY	date(updated) ";
+    qry += "ORDER BY 	date(updated) ASC ";
     sequelize.query(qry, { replacements: { project_id: params.projectId }, type: sequelize.QueryTypes.SELECT }).then(function (results) {
         callback(results);
     });
@@ -56,13 +89,14 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
 //        if (!typeof params.epicKey === 'undefined') {
 //            jql += ' AND ' + jira.epicIssueKeyJQLFieldId + '=' + params.epicKey;
 //        }
-        var jql = 'issuetype=Story';
+        var jql = 'issuetype="Refactor Story"';
         var fields = 'project,issuetype,id,key,summary,description,status,issuetype,updated,created,avatarUrls,';
         fields += jira.epicIssueKeyDisplayFieldId + ',' + jira.teamDisplayFieldId + ',' + jira.storyPointsDisplayFieldId;
 
         return {
             host: jira.jiraHost,
             path: jira.jiraRestPath + 'search?jql=' + encodeURIComponent(jql) + '&fields=' + encodeURIComponent(fields) + '&startAt=' + startAt + '&maxResults=' + maxResults,
+            //path: jira.jiraRestPath + 'search?fields=' + encodeURIComponent(fields) + '&startAt=' + startAt + '&maxResults=' + maxResults,
             auth: jira.jiraUserName + ':' + jira.jiraPassword,
             port: 443,
             keepAlive: true,
@@ -117,6 +151,7 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
             try {
                 var success = false;
                 var body = '';
+                console.log(getterOptions);
                 var jiraReq = https.get(getterOptions, function (jiraRes) {
                     jiraRes.on('data', function (d) {
                         body += d;

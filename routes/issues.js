@@ -12,4 +12,16 @@ router.post('/', function (req, res, next) {
     });
 });
 
+router.post('/getfilteredissuecounts', function (req, res, next) {
+    issue.getFilteredIssueCounts(req.body, function (issueCounts) {
+        res.json(issueCounts);
+    });
+});
+
+router.post('/getissuetypecounts', function (req, res, next) {
+    issue.getIssueTypeCounts(req.body, function (issueCounts) {
+        res.json(issueCounts);
+    });
+});
+
 module.exports = router;
