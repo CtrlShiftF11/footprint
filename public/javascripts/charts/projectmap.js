@@ -21,6 +21,9 @@ function renderProjectMap(projectData, mapType, renderTarget) {
         chart: {
             renderTo: renderTarget
         },
+        legend: {
+            enabled: false
+        },
         credits: {
             enabled: false
         },
