@@ -1,0 +1,4 @@
+Using the official node image from the Docker Hub (https://hub.docker.com/_/node/):
+
+docker build --rm --no-cache -t footprint .
+docker run -it --rm --name my-running-app -p 3000:3000 footprint
