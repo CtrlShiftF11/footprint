@@ -51,10 +51,12 @@ sprintModels.getJiraSprintsByRapidBoardId = function getJiraSprintsByRapidBoardI
             host: jira.jiraHost,
             path: jira.jiraGreenhopperPath + 'sprintquery/' + params.rapidBoardId,
             auth: jira.jiraUserName + ':' + jira.jiraPassword,
+            rejectUnauthorized: false,
             port: 443
         };
         var success = false;
         var body = '';
+        console.log(options);
         var jiraReq = https.get(options, function (jiraRes) {
             jiraRes.on('data', function (d) {
                 body += d;
@@ -64,22 +66,26 @@ sprintModels.getJiraSprintsByRapidBoardId = function getJiraSprintsByRapidBoardI
                 if (body !== '') {
                     var bodyAsObj = JSON.parse(body);
                     if (typeof bodyAsObj !== 'undefined') {
-                        var bodyObj = bodyAsObj["sprints"];
+                        //I'm commenting this and I've decided to return the entire object which also includes the RapidViewId
+                        //var bodyObj = bodyAsObj["sprints"];
+                        var bodyObj = bodyAsObj;
                     }
                 }
                 else {
                     var bodyObj = [];
                 }
+                jiraReq.end();
                 success = true;
                 callback(bodyObj);
             });
             jiraRes.on('error', function (err) {
                 console.log('Unable to gather JIRA data.\n' + err.message);
+                jiraReq.end();
                 success = false;
                 callback(success);
             });
         });
-        jiraReq.end();
+
     }
 
 };
@@ -94,7 +100,7 @@ sprintModels.insertRapidBoardSprint = function insertRapidBoardSprint(params) {
         qry += "FROM    rapid_board_sprint ";
         qry += "WHERE   rapid_board_id = :rapid_board_id ";
         qry += "AND     sprint_id = :sprint_id ";
-        qry += ");"
+        qry += ");";
         sequelize.query(qry, { replacements: { rapid_board_id: params.rapidBoardId, sprint_id: params.sprintId },
             type: sequelize.QueryTypes.INSERT }).spread(function (results, metadata) {
             return true;

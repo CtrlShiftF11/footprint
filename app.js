@@ -12,7 +12,10 @@ var projects = require('./routes/projects');
 var epics = require('./routes/epics');
 var issues = require('./routes/issues');
 var rapidBoards = require('./routes/rapidboards');
+var sprints = require('./routes/sprints');
 var synchronizer = require('./routes/synchronizer');
+//var ngenUserLogins = require('./routes/modules/ngen/ngenuserlogins');
+var ngenUserLogins = require('./routes/ngenuserlogins');
 
 var app = express();
 
@@ -20,7 +23,6 @@ var app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-// uncomment after placing your favicon in /public
 app.use(favicon(__dirname + '/public/images/favicons/favicon.ico'));
 app.use(logger('dev'));
 app.use(bodyParser.json());
@@ -28,20 +30,27 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+////Mustache Template files...
+////app.use(express.static('views/templates'));
+//app.use(express.static(path.join(__dirname, 'views/templates')));
+//app.use(express.static(path.join(__dirname, 'templates')));
+
 //Routing...
 app.use('/', routes);
 
 //Page Routes...
 app.use('/views/projects', projects);
 app.use('/views/epics', epics);
-
+app.use('/views/modules/ngen/ngenuserlogins', ngenUserLogins);
 
 //API Routes...
 app.use('/projects', projects);
 app.use('/epics', epics);
 app.use('/issues', issues);
 app.use('/rapidboards', rapidBoards);
+app.use('/sprints', sprints);
 app.use('/synchronizer', synchronizer);
+app.use('/ngenuserlogins', ngenUserLogins);
 
 //app.use('/views/projects', projects);
 

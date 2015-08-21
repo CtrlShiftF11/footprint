@@ -9,6 +9,11 @@ a {
     color: #00B7FF;
 }
 
+/* Links without href still get pointer */
+a:not([href]) {
+    cursor: pointer;
+}
+
 .reportPanel {
     width: 300px;
     float: left;
@@ -18,4 +23,81 @@ a {
 
 form label {
     min-width: 120px;
+}
+
+div.rapidBoardSelector {
+    width: 170px;
+    height: 50px;
+    border-radius: 6px;
+    border-width: 1px;
+    border-style: solid;
+    padding: 3px;
+    float: left;
+    margin: 2px;
+    cursor: pointer;
+    background-color: #ffffff;
+}
+
+div.activeRapidBoardSelector {
+    color: #ffffff;
+    background-color: #000000;
+    border-radius: 6px;
+    border-color: #000000;
+}
+
+div#filterRibbon {
+    padding: 6px;
+    width: 90%;
+    height: 60%;
+    border-style: solid;
+    border-width: 1px;
+    border-radius: 6px;
+    border-color: #000000;
+    z-index: 10000;
+    display: none;
+    position: fixed;
+    background-color: #dcdcdc;
+}
+
+div#rapidBoardCont {
+    height: 88%;
+    overflow: auto;
+    padding: 6px;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #000000;
+    border-radius: 6px;
+    background-color: dimgrey;
+}
+
+div#sprintCont {
+    height: 88%;
+    overflow: auto;
+    padding: 6px;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #000000;
+    border-radius: 6px;
+    background-color: dimgrey;
+    display: none;
+}
+
+div.sprintSelector {
+    width: 170px;
+    height: 50px;
+    border-radius: 6px;
+    border-width: 1px;
+    border-style: solid;
+    padding: 3px;
+    float: left;
+    margin: 2px;
+    cursor: pointer;
+    background-color: #ffffff;
+}
+
+div.activeSprintSelector {
+    color: #ffffff;
+    background-color: #000000;
+    border-radius: 6px;
+    border-color: #000000;
 }

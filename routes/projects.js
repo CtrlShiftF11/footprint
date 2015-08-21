@@ -3,12 +3,8 @@ var router = express.Router();
 var project = require('../models/project');
 
 router.get('/', function (req, res, next) {
-    project.getJiraProjects(function (success) {
-        if (success) {
-            project.getProjects(function (projectList) {
-                res.json(projectList);
-            });
-        }
+    project.getJiraProjects(function (projectList) {
+        res.json(projectList);
     });
 });
 

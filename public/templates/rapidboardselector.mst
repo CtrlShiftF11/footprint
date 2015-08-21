@@ -1,0 +1,3 @@
+{{#rapidBoardList}}
+<div id="rapidBoard{{id}}" class="rapidBoardSelector" data-rapidBoardId="{{id}}">{{name}}</div>
+{{/rapidBoardList}}

@@ -23,9 +23,9 @@ rapidBoardModels.getJiraRapidBoards = function getJiraRapidBoards(callback) {
         host: jira.jiraHost,
         path: jira.jiraGreenhopperPath + 'rapidview/',
         auth: jira.jiraUserName + ':' + jira.jiraPassword,
+        rejectUnauthorized: false,
         port: 443
     };
-    var success = false;
     var body = '';
     https.get(options, function (jiraRes) {
         jiraRes.on('data', function (d) {
@@ -34,30 +34,35 @@ rapidBoardModels.getJiraRapidBoards = function getJiraRapidBoards(callback) {
         jiraRes.on('end', function (e) {
             var bodyAsObj = JSON.parse(body);
             var bodyObj = bodyAsObj["views"];
-            for (var i = 0; i < bodyObj.length; i++) {
-                var qry = "INSERT INTO rapid_board (id, name, can_edit, sprint_support_enabled, show_days_in_column) ";
-                qry += "SELECT  :id, :name, :can_edit, :sprint_support_enabled, :show_days_in_column ";
-                qry += "WHERE ";
-                qry += "NOT EXISTS ( ";
-                qry += "SELECT  id ";
-                qry += "FROM    rapid_board ";
-                qry += "WHERE   id = :id";
-                qry += ");";
-                sequelize.query(qry, { replacements: { id: bodyObj[i]["id"], name: bodyObj[i]["name"], can_edit: bodyObj[i]["canEdit"],
-                    sprint_support_enabled: bodyObj[i]["sprintSupportEnabled"], show_days_in_column: bodyObj[i]["showDaysInColumn"]},
-                    type: sequelize.QueryTypes.INSERT }).spread(function (results, metadata) {
-
-                });
-            }
-            success = true;
-            callback(success);
+            callback(bodyObj);
         });
         jiraRes.on('error', function (err) {
             console.log('Unable to gather JIRA data.\n' + err.message);
-            success = false;
+            var success = false;
             callback(success);
         });
     });
+};
+
+rapidBoardModels.insertRapidBoards = function insertRapidBoards(bodyObj, callback) {
+    var success = false;
+    for (var i = 0; i < bodyObj.length; i++) {
+        var qry = "INSERT INTO rapid_board (id, name, can_edit, sprint_support_enabled, show_days_in_column) ";
+        qry += "SELECT  :id, :name, :can_edit, :sprint_support_enabled, :show_days_in_column ";
+        qry += "WHERE ";
+        qry += "NOT EXISTS ( ";
+        qry += "SELECT  id ";
+        qry += "FROM    rapid_board ";
+        qry += "WHERE   id = :id";
+        qry += ");";
+        sequelize.query(qry, { replacements: { id: bodyObj[i]["id"], name: bodyObj[i]["name"], can_edit: bodyObj[i]["canEdit"],
+            sprint_support_enabled: bodyObj[i]["sprintSupportEnabled"], show_days_in_column: bodyObj[i]["showDaysInColumn"]},
+            type: sequelize.QueryTypes.INSERT }).spread(function (results, metadata) {
+
+        });
+    }
+    success = true;
+    callback(true);
 };
 
 module.exports = rapidBoardModels;

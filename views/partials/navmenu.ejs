@@ -1,6 +1,6 @@
 <!-- Andy Sandefer -->
 <head>
-    <link rel='stylesheet' href='/stylesheets/style.css'/>
+    <link rel='stylesheet' href="/stylesheets/style.css"/>
 
     <link rel="stylesheet" href="/stylesheets/bootstrap/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="/stylesheets/bootstrap/css/bootstrap-theme.min.css"/>
@@ -9,11 +9,105 @@
     <script src="/javascripts/jquery.min.js"></script>
     <script src="/javascripts/moment.min.js"></script>
     <script src="/javascripts/utils.js"></script>
+    <script src="/javascripts/mustache.min.js"></script>
 
     <script src="/stylesheets/bootstrap/js/bootstrap.min.js"></script>
     <script src="/javascripts/coverflow.min.js"></script>
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script>
+        $(document).ajaxError(ajaxErrorHandler);
+        $(document).ready(function () {
+
+            function getRapidBoardList() {
+                $.getJSON('/rapidboards')
+                        .done(function (rapidBoardData) {
+                            renderRapidBoards(rapidBoardData);
+                        });
+            }
+
+            function renderRapidBoards(rapidBoardData) {
+                $.get('/templates/rapidboardselector.mst', function (rapidBoardTemplate) {
+                    Mustache.parse(rapidBoardTemplate);
+                    var rendered = Mustache.render(rapidBoardTemplate, { rapidBoardList: rapidBoardData });
+                    $("#rapidBoardCont").html(rendered);
+                });
+            }
+
+            function getSprintsByRapidBoard(rapidBoardId) {
+                console.log('rapidBoard arg is ' + rapidBoardId);
+                var params = {};
+                params.rapidBoardId = rapidBoardId;
+                $.getJSON('/sprints/sprintsbyrapidboard/' + rapidBoardId)
+                        .done(function (sprintData) {
+                            $("#rapidBoardCont").fadeOut('400', function () {
+                                $("#sprintCont").fadeIn(400);
+                            });
+
+                            renderSprintSelector(sprintData);
+                        });
+            }
+
+            function renderSprintSelector(sprintData) {
+                $.get('/templates/sprintselector.mst', function (sprintTemplate) {
+                    var rendered = Mustache.render(sprintTemplate, { sprintList: sprintData.sprints, rapidBoardId: sprintData.rapidViewId });
+                    $("#sprintCont").html(rendered);
+                });
+            }
+
+            $("#btnFilters").on('click', function (e) {
+                e.preventDefault();
+                $("#filterRibbon").slideToggle(200, function () {
+                    if ($("#filterRibbon").is(":visible")) {
+                        getRapidBoardList();
+                    }
+                });
+            });
+
+            $("#rapidBoardCont").on('click', 'div.rapidBoardSelector', function (e) {
+                $("div.rapidBoardSelector").removeClass('activeRapidBoardSelector');
+                $(this).addClass('activeRapidBoardSelector');
+                getSprintsByRapidBoard($(this).data('rapidboardid'));
+            });
+
+
+            //Quick Search Widget...
+            $("#quickSearch").focus();
+            $("#quickSearch").on('keyup', function (e) {
+                if (e.keyCode == 27 || $(this).val() == '') {
+                    //Test for Esc key - if pressed then clear all Filters...
+                    resetQuickSearch('#quickSearch', '.rapidBoardSelector');
+                }
+                else {
+                    filterList('.rapidBoardSelector', $(this).val());
+                }
+            });
+
+            $("#btnResetQuickSearch").on('click', function () {
+                resetQuickSearch('#quickSearch', '.rapidBoardSelector');
+            });
+
+            //Reset Quick Search...
+            function resetQuickSearch(selector, filterClass) {
+                $(selector).val('');
+                $(filterClass).removeClass('visible').show().addClass('visible');
+            }
+
+            //Quick Search Filter as you type baddassery...
+            function filterList(selector, query) {
+                query = $.trim(query);
+                query = query.replace(/ /gi, '|');
+                $(selector).each(function () {
+                    ($(this).text().search(new RegExp(query, "i")) < 0) ? $(this).hide().removeClass('visible') : $(this).show().addClass('visible');
+                });
+            }
+
+
+        });
+
+    </script>
+
 </head>
 <nav class="navbar navbar-default navbar-fixed-top navbar-inverse">
     <div class="container">
@@ -31,12 +125,13 @@
                 <li>
                     <a href="/" class="glyphicon glyphicon-home">&nbsp;Home</a>
                 </li>
-                <li><a href="/views/users" class="glyphicon glyphicon-user">&nbsp;Users</a></li>
+                <!--<li><a href="/views/users" class="glyphicon glyphicon-user">&nbsp;Users</a></li>-->
                 <li><a href="/views/projects" class="glyphicon glyphicon-folder-open">&nbsp;Projects</a></li>
                 <li><a href="/views/teams" class="glyphicon glyphicon-globe">&nbsp;Teams</a></li>
                 <li><a href="/views/sprints" class="glyphicon glyphicon-calendar">&nbsp;Sprints</a></li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
+                <li><a id="btnFilters" class="glyphicon glyphicon-filter">&nbsp;Filters</a></li>
                 <li><a href="/views/system" class="glyphicon glyphicon-wrench">&nbsp;Settings</a></li>
                 <li><a href="/views/help" class="glyphicon glyphicon-question-sign">&nbsp;Help</a></li>
                 <li><a href="/views/about" class="glyphicon glyphicon-info-sign">&nbsp;About</a></li>
@@ -45,3 +140,15 @@
         <!--/.nav-collapse -->
     </div>
 </nav>
+
+<div id="filterRibbon">
+    <div id="quickSearchCont" style="margin-bottom: 10px;">
+        <label for="quickSearch">Quick Search</label>
+        <input id="quickSearch" type="text" style="border-radius: 6px; width: 260px;">
+        <a id="btnResetQuickSearch" class="btn btn-primary">Reset</a>
+    </div>
+    <div class="clearfix"></div>
+    <div id="rapidBoardCont" class="center-block">
+    </div>
+    <div id="sprintCont"></div>
+</div>

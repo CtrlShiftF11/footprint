@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<%= include partials/navmenu %>
+<head>
+    <script src="/javascripts/highcharts.js"></script>
+    <script src="/javascripts/highcharts-3d.js"></script>
+    <script src="/javascripts/heatmap.js"></script>
+    <script src="/javascripts/treemap.js"></script>
+    <script src="/javascripts/charts/projectmap.js"></script>
+    <script src="/javascripts/charts/issuecountsbyday.js"></script>
+    <script src="/javascripts/charts/issuecountsbytype.js"></script>
+    <script>
+
+        $(document).ready(function () {
+
+            getIssueCountsByProject('projectMap');
+
+        });
+    </script>
+
+
+</head>
+<body>
+
+<div id="projectMap" style="float:left; width:800px; height: 600px;"></div>
+
+<div id="resolvedIssues" style="float:left; width:500px; height: 260px;"></div>
+
+<div id="issuesByType" style="float:left; width:500px; height: 260px;"></div>
+
+</body>
+</html>
