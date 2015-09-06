@@ -13,7 +13,7 @@ rapidBoardModels.getRapidBoards = function getRapidBoards(callback) {
     var qry = "SELECT       id, name, can_edit, sprint_support_enabled, show_days_in_column ";
     qry += "FROM        rapid_board ";
     qry += "ORDER BY    name;";
-    sequelize.query(qry, { type: sequelize.QueryTypes.SELECT }).then(function (results) {
+    sequelize.query(qry, {type: sequelize.QueryTypes.SELECT}).then(function (results) {
         callback(results);
     });
 };
@@ -27,18 +27,20 @@ rapidBoardModels.getJiraRapidBoards = function getJiraRapidBoards(callback) {
         port: 443
     };
     var body = '';
-    https.get(options, function (jiraRes) {
+    var jiraReq = https.get(options, function (jiraRes) {
         jiraRes.on('data', function (d) {
             body += d;
         });
         jiraRes.on('end', function (e) {
             var bodyAsObj = JSON.parse(body);
             var bodyObj = bodyAsObj["views"];
+            jiraReq.end();
             callback(bodyObj);
         });
         jiraRes.on('error', function (err) {
             console.log('Unable to gather JIRA data.\n' + err.message);
             var success = false;
+            jiraReq.end();
             callback(success);
         });
     });
@@ -55,9 +57,13 @@ rapidBoardModels.insertRapidBoards = function insertRapidBoards(bodyObj, callbac
         qry += "FROM    rapid_board ";
         qry += "WHERE   id = :id";
         qry += ");";
-        sequelize.query(qry, { replacements: { id: bodyObj[i]["id"], name: bodyObj[i]["name"], can_edit: bodyObj[i]["canEdit"],
-            sprint_support_enabled: bodyObj[i]["sprintSupportEnabled"], show_days_in_column: bodyObj[i]["showDaysInColumn"]},
-            type: sequelize.QueryTypes.INSERT }).spread(function (results, metadata) {
+        sequelize.query(qry, {
+            replacements: {
+                id: bodyObj[i]["id"], name: bodyObj[i]["name"], can_edit: bodyObj[i]["canEdit"],
+                sprint_support_enabled: bodyObj[i]["sprintSupportEnabled"], show_days_in_column: bodyObj[i]["showDaysInColumn"]
+            },
+            type: sequelize.QueryTypes.INSERT
+        }).spread(function (results, metadata) {
 
         });
     }

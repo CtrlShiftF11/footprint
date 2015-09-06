@@ -192,21 +192,21 @@ router.post('/', function (req, res, next) {
 //                res.sendStatus(200);
 //            });
 
-        syncSprints()
-            .then(function (sprintPromise) {
-                console.log(sprintPromise);
+        //syncSprints()
+        //    .then(function (sprintPromise) {
+        //        console.log(sprintPromise);
+        //        res.sendStatus(200);
+        //    });
+
+        syncIssues()
+            .then(function (issuePromise) {
+                console.log(issuePromise);
                 res.sendStatus(200);
             });
 
-//        syncIssues()
-//            .then(function (issuePromise) {
-//                console.log(issuePromise);
-//                res.sendStatus(200);
-//            });
-
     }
     else {
-        res.status(500).send({ error: 'You do not have permission use this feature.'});
+        res.status(500).send({error: 'You do not have permission use this feature.'});
     }
 });
 

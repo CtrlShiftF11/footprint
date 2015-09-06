@@ -30,81 +30,120 @@
             function renderRapidBoards(rapidBoardData) {
                 $.get('/templates/rapidboardselector.mst', function (rapidBoardTemplate) {
                     Mustache.parse(rapidBoardTemplate);
-                    var rendered = Mustache.render(rapidBoardTemplate, { rapidBoardList: rapidBoardData });
+                    var rendered = Mustache.render(rapidBoardTemplate, {rapidBoardList: rapidBoardData});
                     $("#rapidBoardCont").html(rendered);
                 });
             }
 
             function getSprintsByRapidBoard(rapidBoardId) {
-                console.log('rapidBoard arg is ' + rapidBoardId);
                 var params = {};
                 params.rapidBoardId = rapidBoardId;
+
+                //Get Sprints by Rapid Board
                 $.getJSON('/sprints/sprintsbyrapidboard/' + rapidBoardId)
                         .done(function (sprintData) {
-                            $("#rapidBoardCont").fadeOut('400', function () {
-                                $("#sprintCont").fadeIn(400);
-                            });
+                            //Create Rapid Board Sprint intersection records...
+                            var deferreds = [];
+                            for (var i = 0; i < sprintData.sprints.length; i++) {
+                                var rapidBoardSprintParams = {};
+                                rapidBoardSprintParams.rapidBoardId = sprintData["rapidViewId"];
+                                rapidBoardSprintParams.sprintId = sprintData["sprints"][i]["id"];
+                                deferreds.push(
+                                        $.ajax({
+                                            url: "/sprints/insertrapidboardsprint",
+                                            type: "POST",
+                                            contentType: "application/json",
+                                            data: JSON.stringify(rapidBoardSprintParams)
+                                        })
+                                );
+                            }
+                            $.when.apply($, deferreds).done(function () {
+                                //Get Sprint Reports
+                                console.log('all done!');
+                                console.log(sprintData);
+                                for (var i = 0; i < sprintData.sprints.length; i++) {
+                                    $.getJSON('/sprints/getsprintreport?rapidBoardId=' + sprintData["rapidViewId"] + '&sprintId=' + sprintData["sprints"][i]["id"])
+                                            .done(function (sprintReport) {
+                                                console.log(sprintReport);
+                                            });
+                                }
 
-                            renderSprintSelector(sprintData);
+                            }
                         });
             }
 
-            function renderSprintSelector(sprintData) {
-                $.get('/templates/sprintselector.mst', function (sprintTemplate) {
-                    var rendered = Mustache.render(sprintTemplate, { sprintList: sprintData.sprints, rapidBoardId: sprintData.rapidViewId });
-                    $("#sprintCont").html(rendered);
-                });
-            }
+            )
+            ;
 
-            $("#btnFilters").on('click', function (e) {
-                e.preventDefault();
-                $("#filterRibbon").slideToggle(200, function () {
-                    if ($("#filterRibbon").is(":visible")) {
-                        getRapidBoardList();
-                    }
-                });
+//                $("#rapidBoardCont").fadeOut('400', function () {
+//                    $("#sprintCont").fadeIn(400);
+//                });
+//
+//                renderSprintSelector(sprintData);
+//              });
+        }
+
+        function getSprintReports() {
+
+        }
+
+        function renderSprintSelector(sprintData) {
+            $.get('/templates/sprintselector.mst', function (sprintTemplate) {
+                var rendered = Mustache.render(sprintTemplate, {sprintList: sprintData.sprints, rapidBoardId: sprintData.rapidViewId});
+                $("#sprintCont").html(rendered);
             });
+        }
 
-            $("#rapidBoardCont").on('click', 'div.rapidBoardSelector', function (e) {
-                $("div.rapidBoardSelector").removeClass('activeRapidBoardSelector');
-                $(this).addClass('activeRapidBoardSelector');
-                getSprintsByRapidBoard($(this).data('rapidboardid'));
-            });
-
-
-            //Quick Search Widget...
-            $("#quickSearch").focus();
-            $("#quickSearch").on('keyup', function (e) {
-                if (e.keyCode == 27 || $(this).val() == '') {
-                    //Test for Esc key - if pressed then clear all Filters...
-                    resetQuickSearch('#quickSearch', '.rapidBoardSelector');
-                }
-                else {
-                    filterList('.rapidBoardSelector', $(this).val());
+        $("#btnFilters").on('click', function (e) {
+            e.preventDefault();
+            $("#filterRibbon").slideToggle(200, function () {
+                if ($("#filterRibbon").is(":visible")) {
+                    getRapidBoardList();
                 }
             });
-
-            $("#btnResetQuickSearch").on('click', function () {
-                resetQuickSearch('#quickSearch', '.rapidBoardSelector');
-            });
-
-            //Reset Quick Search...
-            function resetQuickSearch(selector, filterClass) {
-                $(selector).val('');
-                $(filterClass).removeClass('visible').show().addClass('visible');
-            }
-
-            //Quick Search Filter as you type baddassery...
-            function filterList(selector, query) {
-                query = $.trim(query);
-                query = query.replace(/ /gi, '|');
-                $(selector).each(function () {
-                    ($(this).text().search(new RegExp(query, "i")) < 0) ? $(this).hide().removeClass('visible') : $(this).show().addClass('visible');
-                });
-            }
-
-
         });
+
+        $("#rapidBoardCont").on('click', 'div.rapidBoardSelector', function (e) {
+            $("div.rapidBoardSelector").removeClass('activeRapidBoardSelector');
+            $(this).addClass('activeRapidBoardSelector');
+            getSprintsByRapidBoard($(this).data('rapidboardid'));
+        });
+
+
+        //Quick Search Widget...
+        $("#quickSearch").focus();
+        $("#quickSearch").on('keyup', function (e) {
+            if (e.keyCode == 27 || $(this).val() == '') {
+                //Test for Esc key - if pressed then clear all Filters...
+                resetQuickSearch('#quickSearch', '.rapidBoardSelector');
+            }
+            else {
+                filterList('.rapidBoardSelector', $(this).val());
+            }
+        });
+
+        $("#btnResetQuickSearch").on('click', function () {
+            resetQuickSearch('#quickSearch', '.rapidBoardSelector');
+        });
+
+        //Reset Quick Search...
+        function resetQuickSearch(selector, filterClass) {
+            $(selector).val('');
+            $(filterClass).removeClass('visible').show().addClass('visible');
+        }
+
+        //Quick Search Filter as you type baddassery...
+        function filterList(selector, query) {
+            query = $.trim(query);
+            query = query.replace(/ /gi, '|');
+            $(selector).each(function () {
+                ($(this).text().search(new RegExp(query, "i")) < 0) ? $(this).hide().removeClass('visible') : $(this).show().addClass('visible');
+            });
+        }
+
+
+        })
+        ;
 
     </script>
 

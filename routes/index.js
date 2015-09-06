@@ -25,4 +25,8 @@ router.get('/views/issues', function (req, res) {
     res.render('issues', { title: 'footprint' });
 });
 
+router.get('/views/modules/ngen/ngenuserlogins', function (req, res) {
+    res.render('modules/ngen/ngenuserlogins', {title: 'footprint' });
+});
+
 module.exports = router;

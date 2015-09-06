@@ -18,7 +18,7 @@ issueModels.getIssueTypeCounts = function (params, callback) {
     qry += "WHERE		    a.project_id = :project_id ";
     qry += "GROUP BY		a.project_id, a.issue_type_id, b.name ";
     qry += "ORDER BY		issue_count DESC";
-    sequelize.query(qry, { replacements: { project_id: params.projectId }, type: sequelize.QueryTypes.SELECT }).then(function (results) {
+    sequelize.query(qry, {replacements: {project_id: params.projectId}, type: sequelize.QueryTypes.SELECT}).then(function (results) {
         callback(results);
     });
 }
@@ -28,7 +28,7 @@ issueModels.getIssues = function getIssues(params, callback) {
     qry += "FROM        issue ";
     qry += "WHERE       project_id = :project_id ";
     qry += "ORDER BY    summary";
-    sequelize.query(qry, { replacements: { project_id: params.projectId }, type: sequelize.QueryTypes.SELECT }).then(function (results) {
+    sequelize.query(qry, {replacements: {project_id: params.projectId}, type: sequelize.QueryTypes.SELECT}).then(function (results) {
         callback(results);
     });
 };
@@ -48,7 +48,7 @@ issueModels.getFilteredIssueCounts = function getFilteredIssueCounts(params, cal
     }
     qry += "GROUP BY	date(updated) ";
     qry += "ORDER BY 	date(updated) ASC ";
-    sequelize.query(qry, { replacements: { project_id: params.projectId }, type: sequelize.QueryTypes.SELECT }).then(function (results) {
+    sequelize.query(qry, {replacements: {project_id: params.projectId}, type: sequelize.QueryTypes.SELECT}).then(function (results) {
         callback(results);
     });
 };
@@ -100,7 +100,8 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
             auth: jira.jiraUserName + ':' + jira.jiraPassword,
             port: 443,
             keepAlive: true,
-            keepAliveMsecs: 200000
+            keepAliveMsecs: 200000,
+            rejectUnauthorized: false
         };
     }
 
@@ -115,11 +116,12 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
                 protocol: 'https',
                 host: getterOptions.host,
                 path: getterOptions.path,
-                port: getterOptions.port
+                port: getterOptions.port,
+                rejectUnauthorized: false
             });
 
             var requestTimedOut = false;
-            jiraReq.setTimeout(20000, function () {
+            jiraReq.setTimeout(200000, function () {
                 console.log('Request Timed Out');
                 console.log('Unable to gather JIRA data.');
                 requestTimedOut = true;
@@ -210,12 +212,25 @@ issueModels.getJiraIssues = function getJiraIssues(params, callback) {
                 if (params.bodyObj[i]["fields"][jira.teamDisplayFieldId] != null) {
                     teamId = params.bodyObj[i]["fields"][jira.teamDisplayFieldId]["id"];
                 }
-                sequelize.query(qry, { replacements: { id: params.bodyObj[i]["id"], self: params.bodyObj[i]["self"], key: params.bodyObj[i]["key"], summary: params.bodyObj[i]["fields"]["summary"],
-                    description: params.bodyObj[i]["fields"]["description"], project_id: params.bodyObj[i]["fields"]["project"]["id"], updated: params.bodyObj[i]["fields"]["updated"],
-                    created: params.bodyObj[i]["fields"]["created"], status_id: params.bodyObj[i]["fields"]["status"]["id"], issue_type_id: params.bodyObj[i]["fields"]["issuetype"]["id"],
-                    epic_key: params.bodyObj[i]["fields"][jira.epicIssueKeyDisplayFieldId], team_id: teamId,
-                    story_points: params.bodyObj[i]["fields"][jira.storyPointsDisplayFieldId], resolution_date: params.bodyObj[i]["fields"]["resolutiondate"]},
-                    type: sequelize.QueryTypes.INSERT }).spread(function (results, metadata) {
+                sequelize.query(qry, {
+                    replacements: {
+                        id: params.bodyObj[i]["id"],
+                        self: params.bodyObj[i]["self"],
+                        key: params.bodyObj[i]["key"],
+                        summary: params.bodyObj[i]["fields"]["summary"],
+                        description: params.bodyObj[i]["fields"]["description"],
+                        project_id: params.bodyObj[i]["fields"]["project"]["id"],
+                        updated: params.bodyObj[i]["fields"]["updated"],
+                        created: params.bodyObj[i]["fields"]["created"],
+                        status_id: params.bodyObj[i]["fields"]["status"]["id"],
+                        issue_type_id: params.bodyObj[i]["fields"]["issuetype"]["id"],
+                        epic_key: params.bodyObj[i]["fields"][jira.epicIssueKeyDisplayFieldId],
+                        team_id: teamId,
+                        story_points: params.bodyObj[i]["fields"][jira.storyPointsDisplayFieldId],
+                        resolution_date: params.bodyObj[i]["fields"]["resolutiondate"]
+                    },
+                    type: sequelize.QueryTypes.INSERT
+                }).spread(function (results, metadata) {
                     return true;
                 });
             }

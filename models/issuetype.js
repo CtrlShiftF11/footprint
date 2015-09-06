@@ -14,7 +14,8 @@ issueTypeModels.getJiraIssueTypes = function getJiraIssueTypes(callback) {
         host: jira.jiraHost,
         path: jira.jiraRestPath + 'issuetype',
         auth: jira.jiraUserName + ':' + jira.jiraPassword,
-        port: 443
+        port: 443,
+        rejectUnauthorized: false
     };
     var success = false;
     var body = '';
@@ -33,9 +34,13 @@ issueTypeModels.getJiraIssueTypes = function getJiraIssueTypes(callback) {
                 qry += "FROM    issue_type ";
                 qry += "WHERE   id = :id";
                 qry += ");";
-                sequelize.query(qry, { replacements: { id: bodyObj[i]["id"], self: bodyObj[i]["self"], name: bodyObj[i]["name"], subtask: bodyObj[i]["subtask"],
-                    description: bodyObj[i]["description"], icon_url: bodyObj[i]["iconUrl"]},
-                    type: sequelize.QueryTypes.INSERT }).spread(function (results, metadata) {
+                sequelize.query(qry, {
+                    replacements: {
+                        id: bodyObj[i]["id"], self: bodyObj[i]["self"], name: bodyObj[i]["name"], subtask: bodyObj[i]["subtask"],
+                        description: bodyObj[i]["description"], icon_url: bodyObj[i]["iconUrl"]
+                    },
+                    type: sequelize.QueryTypes.INSERT
+                }).spread(function (results, metadata) {
 
                 });
             }
