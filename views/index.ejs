@@ -2,9 +2,25 @@
 <html>
 <%= include partials/navmenu %>
 <head>
-    <title><%= title %></title>
+    <script src="/javascripts/TweenMax.min.js"></script>
+    <script src="/javascripts/TimelineMax.min.js"></script>
 </head>
+
+<script>
+
+    function whiteBlurElement(element) {
+        TweenMax.to(element, .3, {
+            boxShadow: "0px 0px 24px 6px white",
+            backgroundColor: "white",
+            color: "black"
+        });
+    }
+
+
+</script>
+
 <body>
+
 
 </body>
 </html>

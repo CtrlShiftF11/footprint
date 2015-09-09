@@ -14,7 +14,7 @@ projectModels.getProjects = function getProjects(callback) {
     var qry = "SELECT     id, self, key, name, avatar_urls ";
     qry += "FROM       project ";
     qry += "ORDER BY   name;";
-    sequelize.query(qry, { type: sequelize.QueryTypes.SELECT }).then(function (results) {
+    sequelize.query(qry, {type: sequelize.QueryTypes.SELECT}).then(function (results) {
         callback(results);
     });
 };
@@ -37,7 +37,7 @@ projectModels.getJiraProjects = function getJiraProjects(callback) {
             //var bodyObj = JSON.parse(body);
             jiraReq.end();
             //callback(bodyObj);
-            callback(body);
+            callback(JSON.parse(body));
         });
         jiraRes.on('error', function (err) {
             console.log('Unable to gather JIRA data.\n' + err.message);
@@ -50,7 +50,9 @@ projectModels.getJiraProjects = function getJiraProjects(callback) {
 
 projectModels.insertJiraProjects = function insertJiraProjects(bodyObj, callback) {
     var success = false;
+
     for (var i = 0; i < bodyObj.length; i++) {
+        console.log(bodyObj[i]);
         var qry = "INSERT INTO project (id, self, key, name, avatar_urls) ";
         qry += "SELECT :id, :self, :key, :name, :avatar_urls ";
         qry += "WHERE ";
@@ -59,9 +61,13 @@ projectModels.insertJiraProjects = function insertJiraProjects(bodyObj, callback
         qry += "FROM    project ";
         qry += "WHERE   id = :id";
         qry += ");";
-        sequelize.query(qry, { replacements: { id: bodyObj[i]["id"], self: bodyObj[i]["self"], key: bodyObj[i]["key"],
-            name: bodyObj[i]["name"], avatar_urls: JSON.stringify(bodyObj[i]["avatarUrls"])},
-            type: sequelize.QueryTypes.INSERT }).spread(function (results, metadata) {
+        sequelize.query(qry, {
+            replacements: {
+                id: bodyObj[i]["id"], self: bodyObj[i]["self"], key: bodyObj[i]["key"],
+                name: bodyObj[i]["name"], avatar_urls: JSON.stringify(bodyObj[i]["avatarUrls"])
+            },
+            type: sequelize.QueryTypes.INSERT
+        }).spread(function (results, metadata) {
             //Wow - I can't believe I finally figured this out! I'm now the 3rd smartest person in Greenwood.
         });
     }
@@ -79,7 +85,7 @@ projectModels.getProjectIssueCounts = function getProjectIssueCounts(callback) {
     qry += ") AS total_issues ";
     qry += "FROM 		project a ";
     qry += "ORDER BY 	3 DESC;";
-    sequelize.query(qry, { type: sequelize.QueryTypes.SELECT }).then(function (results) {
+    sequelize.query(qry, {type: sequelize.QueryTypes.SELECT}).then(function (results) {
         callback(results);
     });
 };

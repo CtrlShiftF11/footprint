@@ -16,7 +16,7 @@ epicModels.getEpicsByProjectId = function getEpicsByProjectId(params, callback) 
     qry += "FROM       epic ";
     qry += "WHERE      project_id = :project_id ";
     qry += "ORDER BY   summary;";
-    sequelize.query(qry, { replacements: { project_id: params.projectId }, type: sequelize.QueryTypes.SELECT }).then(function (results) {
+    sequelize.query(qry, {replacements: {project_id: params.projectId}, type: sequelize.QueryTypes.SELECT}).then(function (results) {
         callback(results);
     });
 };
@@ -50,7 +50,8 @@ epicModels.getJiraEpicsByProjectId = function getJiraEpicsByProjectId(params, ca
             path: jira.jiraRestPath + 'search?jql=' + encodeURIComponent(jql) + '&fields=' + encodeURIComponent(fields) + '&startAt=' + startAt + '&maxResults=' + maxResults,
             auth: jira.jiraUserName + ':' + jira.jiraPassword,
             port: 443,
-            keepAlive: true
+            keepAlive: true,
+            rejectUnauthorized: false
         };
     }
 
@@ -59,10 +60,6 @@ epicModels.getJiraEpicsByProjectId = function getJiraEpicsByProjectId(params, ca
             console.log(getterOptions.path);
             var jiraReq = httpSync.request({
                 method: 'GET',
-//                headers: {
-//                    Authorization: 'Basic ' + getterOptions.auth,
-//                    "Content-Type": "application/json"
-//                },
                 user: jira.jiraUserName,
                 password: jira.jiraPassword,
                 protocol: 'https',
@@ -151,10 +148,20 @@ epicModels.getJiraEpicsByProjectId = function getJiraEpicsByProjectId(params, ca
                 qry += "FROM    epic ";
                 qry += "WHERE   id = :id";
                 qry += ");";
-                sequelize.query(qry, { replacements: { id: params.bodyObj[i]["id"], self: params.bodyObj[i]["self"], key: params.bodyObj[i]["key"], summary: params.bodyObj[i]["fields"]["summary"],
-                    description: params.bodyObj[i]["fields"]["description"], project_id: params.bodyObj[i]["fields"]["project"]["id"], updated: params.bodyObj[i]["fields"]["updated"],
-                    created: params.bodyObj[i]["fields"]["created"], status_id: params.bodyObj[i]["fields"]["status"]["id"]},
-                    type: sequelize.QueryTypes.INSERT }).spread(function (results, metadata) {
+                sequelize.query(qry, {
+                    replacements: {
+                        id: params.bodyObj[i]["id"],
+                        self: params.bodyObj[i]["self"],
+                        key: params.bodyObj[i]["key"],
+                        summary: params.bodyObj[i]["fields"]["summary"],
+                        description: params.bodyObj[i]["fields"]["description"],
+                        project_id: params.bodyObj[i]["fields"]["project"]["id"],
+                        updated: params.bodyObj[i]["fields"]["updated"],
+                        created: params.bodyObj[i]["fields"]["created"],
+                        status_id: params.bodyObj[i]["fields"]["status"]["id"]
+                    },
+                    type: sequelize.QueryTypes.INSERT
+                }).spread(function (results, metadata) {
                     return true;
                 });
             }

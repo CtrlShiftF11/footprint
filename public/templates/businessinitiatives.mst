@@ -1,0 +1,3 @@
+{{#buisnessInitList}}
+<div id="businessInit{{id}}" class="businessInitSelector" data-businessInitId={{id}}>{{title}}</div>
+{{/businessInitList}}

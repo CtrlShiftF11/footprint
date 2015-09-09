@@ -25,16 +25,10 @@ router.post('/', function (req, res, next) {
         }
 
         function syncProjects() {
-            var deferred = Q.defer();
-            project.getJiraProjects(function (success) {
-                if (success) {
-                    deferred.resolve('Synchronized Projects');
-                }
-                else {
-                    deferred.reject(new Error('Error Synchronizing JIRA Projects'));
-                }
+            project.getJiraProjects(function (projectList) {
+                project.insertJiraProjects(projectList, function (success) {
+                });
             });
-            return deferred.promise;
         }
 
         function syncRapidBoards() {
@@ -53,7 +47,6 @@ router.post('/', function (req, res, next) {
         //This function is contingent upon completion of gathering JIRA Projects first!
         //Under construction!
         function syncEpics() {
-            var deferred = Q.defer();
             try {
                 project.getProjects(function (projectList) {
                     for (var i = 0; i < projectList.length; i++) {
@@ -63,13 +56,11 @@ router.post('/', function (req, res, next) {
                         epic.getJiraEpicsByProjectId(params, function (success) {
                         });
                     }
-                    deferred.resolve('Synchronized Epics');
                 });
             }
             catch (err) {
-                deferred.reject('Error:' + err.message);
+                console.log('Error:' + err.message);
             }
-            return deferred.promise;
         }
 
         //This function relies on Rapid Boards!
@@ -186,11 +177,8 @@ router.post('/', function (req, res, next) {
 //                res.sendStatus(200);
 //            }).done();
 
-//        syncEpics()
-//            .then(function (epicPromise) {
-//                console.log(epicPromise);
-//                res.sendStatus(200);
-//            });
+        //syncEpics();
+
 
         //syncSprints()
         //    .then(function (sprintPromise) {
@@ -198,11 +186,11 @@ router.post('/', function (req, res, next) {
         //        res.sendStatus(200);
         //    });
 
-        syncIssues()
-            .then(function (issuePromise) {
-                console.log(issuePromise);
-                res.sendStatus(200);
-            });
+        //syncIssues()
+        //    .then(function (issuePromise) {
+        //        console.log(issuePromise);
+        //        res.sendStatus(200);
+        //    });
 
     }
     else {

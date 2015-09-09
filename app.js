@@ -14,8 +14,8 @@ var issues = require('./routes/issues');
 var rapidBoards = require('./routes/rapidboards');
 var sprints = require('./routes/sprints');
 var synchronizer = require('./routes/synchronizer');
-//var ngenUserLogins = require('./routes/modules/ngen/ngenuserlogins');
 var ngenUserLogins = require('./routes/ngenuserlogins');
+var businessInits = require('./routes/businessinitiatives');
 
 var app = express();
 
@@ -26,7 +26,7 @@ app.set('view engine', 'ejs');
 app.use(favicon(__dirname + '/public/images/favicons/favicon.ico'));
 app.use(logger('dev'));
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({extended: false}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -51,8 +51,7 @@ app.use('/rapidboards', rapidBoards);
 app.use('/sprints', sprints);
 app.use('/synchronizer', synchronizer);
 app.use('/ngenuserlogins', ngenUserLogins);
-
-//app.use('/views/projects', projects);
+app.use('/businessinititatives', businessInits);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
@@ -61,7 +60,8 @@ app.use(function (req, res, next) {
     next(err);
 });
 
-//error handlers
+
+//error handlers...
 
 // development error handler
 // will print stacktrace
